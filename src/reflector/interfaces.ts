@@ -100,6 +100,7 @@ export type ChangedSpaces = {
 };
 
 export type ValidatorSpace = {
+  name: string;
   spaceId: string;
   parentSpaceId: string;
   kusamaId: string;

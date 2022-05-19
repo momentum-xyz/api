@@ -6,9 +6,9 @@ import { v4 as uuidv4 } from 'uuid';
 
 export async function getKusamaConfig(connection: Queryable): Promise<KusamaConfig> {
   const sql = `
-      SELECT *
-      FROM world_definition
-      WHERE JSON_EXTRACT(config, '$.kind') = "Kusama";
+    SELECT *
+    FROM world_definition
+    WHERE JSON_EXTRACT(config, '$.kind') = "Kusama";
   `;
   const r = await connection.query(sql);
   if (!r[0]) {
@@ -30,23 +30,23 @@ export async function getUiTypeId(connection: Queryable): Promise<string> {
 }
 
 export async function getValidatorSpaceId(
-  conn: Queryable,
-  validatorId: string,
-  config: KusamaConfig,
+    conn: Queryable,
+    validatorId: string,
+    config: KusamaConfig,
 ): Promise<{ spaceId: string; parentId: string; isActive: number } | null> {
   const sql = `
-      SELECT BIN_TO_UUID(spaces.id)       AS spaceId,
-             BIN_TO_UUID(spaces.parentId) AS parentId,
-             sa2.flag                     AS isActive
-      FROM spaces
-               JOIN space_attributes sa1
-                    ON sa1.spaceId = spaces.id
-                        AND sa1.attributeId = UUID_TO_BIN(${escape(config.attributes.kusama_validator_id)})
-               JOIN space_attributes sa2
-                    ON sa2.spaceId = spaces.id
-                        AND sa2.attributeId = UUID_TO_BIN(${escape(config.attributes.kusama_validator_is_active)})
-      WHERE true
-        AND sa1.value = ${escape(validatorId)}
+    SELECT BIN_TO_UUID(spaces.id)       AS spaceId,
+           BIN_TO_UUID(spaces.parentId) AS parentId,
+           sa2.flag                     AS isActive
+    FROM spaces
+           JOIN space_attributes sa1
+                ON sa1.spaceId = spaces.id
+                  AND sa1.attributeId = UUID_TO_BIN(${escape(config.attributes.kusama_validator_id)})
+           JOIN space_attributes sa2
+                ON sa2.spaceId = spaces.id
+                  AND sa2.attributeId = UUID_TO_BIN(${escape(config.attributes.kusama_validator_is_active)})
+    WHERE true
+      AND sa1.value = ${escape(validatorId)}
   `;
 
   const r = await conn.query(sql);
@@ -87,9 +87,9 @@ export async function getValidatorSpaceId(
 // }
 
 export async function getTotalKusamaValidators(
-  conn: Queryable,
-  operatorSpaceId: string,
-  config: KusamaConfig,
+    conn: Queryable,
+    operatorSpaceId: string,
+    config: KusamaConfig,
 ): Promise<{ active: number; total: number }> {
   if (operatorSpaceId === config.spaces.validator_cloud) {
     return { active: 1, total: 1 };
@@ -97,7 +97,7 @@ export async function getTotalKusamaValidators(
 
   let sql = `SELECT id
              FROM spaces
-                      JOIN space_attributes sa on spaces.id = sa.spaceId
+                    JOIN space_attributes sa on spaces.id = sa.spaceId
              WHERE sa.attributeId = UUID_TO_BIN(${escape(config.attributes.kusama_validator_is_active)})
                AND sa.flag = 2
                AND parentId = UUID_TO_BIN(${escape(operatorSpaceId)})
@@ -151,30 +151,16 @@ export function parseToValidatorInfo(obj: Record<string, any>): ValidatorInfo {
     entity: { name: 'none', accountId: 'none' },
   };
 
-  let entityName = 'Unknown';
-  if (obj.entity && obj.entity.name !== 'none') {
-    entityName = obj.entity.name;
+  const { selfName, parentName } = getNames(obj);
+
+  let fullName = selfName;
+  if (parentName) {
+    fullName = `${parentName}/${selfName}`;
   }
+
   let entityAccountId = 'f'.repeat(47);
   if (obj.entity && obj.entity.accountId != 'none' && obj.entity.accountId.length === 47) {
     entityAccountId = obj.entity.accountId;
-  }
-
-  // TODO remove entity field above
-
-  // Hack to support new harvester format
-  if (obj.parent && obj.parent.name !== 'none') {
-    entityName = obj.parent.name;
-  }
-
-  if (obj.parent && obj.parent.accountId != 'none' && obj.parent.accountId.length === 47) {
-    entityAccountId = obj.parent.accountId;
-  }
-  // End of hack
-
-  let name = obj.accountId;
-  if (obj.name) {
-    name = obj.name;
   }
 
   const validator: ValidatorInfo = {
@@ -185,15 +171,33 @@ export function parseToValidatorInfo(obj: Record<string, any>): ValidatorInfo {
     commissionLongFormat: obj.commission ? Math.floor(obj.commission * 100) + '% COMMISSION' : '',
     nominators: obj.nominators,
     validatorAccountDetails: {
-      name,
+      name: fullName,
     },
     entity: {
       accountId: entityAccountId,
-      name: entityName,
+      name: parentName,
     },
   };
 
   return validator;
+}
+
+function getNames(obj): { selfName: string; parentName: string | null } {
+  let selfName = obj.accountId;
+  if (obj.identity && obj.identity.display && obj.identity.display !== '') {
+    selfName = obj.identity.display;
+  } else if (obj.name && obj.name !== '') {
+    selfName = obj.name;
+  }
+
+  let parentName = null;
+  if (obj.identity && obj.identity.displayParent && obj.identity.displayParent !== '') {
+    parentName = obj.identity.displayParent;
+  } else if (obj.entity && obj.entity.name && obj.entity.name !== '') {
+    parentName = obj.entity.name;
+  }
+
+  return { selfName, parentName };
 }
 
 export async function renderName(text: string) {
@@ -226,14 +230,14 @@ export async function renderName(text: string) {
     };
 
     const frameResponse = await axios.post(
-      `${process.env.RENDER_INTERNAL_URL}/render/addframe`,
-      { ...jsonObject },
-      options,
+        `${process.env.RENDER_INTERNAL_URL}/render/addframe`,
+        { ...jsonObject },
+        options,
     );
 
     return frameResponse.data.hash;
   } catch (e) {
-    // console.error(e);
+    console.error(e);
   }
 }
 
@@ -280,6 +284,7 @@ export async function getAllValidators(conn: Queryable, config: KusamaConfig): P
   const sql = `
       SELECT BIN_TO_UUID(spaces.id)       AS spaceId,
              BIN_TO_UUID(spaces.parentId) AS parentSpaceId,
+             spaces.name                  AS name,
              sa1.value                    AS kusamaId,
              sa2.value                    AS kusamaParentId
 

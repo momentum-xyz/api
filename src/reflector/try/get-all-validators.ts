@@ -35,7 +35,7 @@ async function main() {
     const taken = [];
     findConnected(kusamaId, validators, taken);
     if (taken.length > 1) {
-      console.log(kusamaId, taken.length);
+      console.log(kusamaId, taken.length, validator.name);
     }
   }
 
@@ -43,7 +43,6 @@ async function main() {
 }
 
 main();
-
 
 // GLxyY9cx27VkZNrf33zHURwLLa58jU8XZeg8HDWkNpX2JXS 2
 // CzugcapJWD8CEHBYHDeFpVcxfzFBCg57ic72y4ryJfXUnk7 100
