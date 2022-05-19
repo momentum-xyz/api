@@ -77,7 +77,7 @@ export class ReflectorModule {
       try {
         this.workersCount++;
         const { created, updated } = await this.kusamaValidator.createOrUpdateOrDelete(validatorId, validator);
-        // console.log('COMPLETE', this.workersCount);
+        console.log('COMPLETE', this.workersCount);
         this.lastProcessedPayload[validatorId] = message;
 
         for (const spaceId of created) {
