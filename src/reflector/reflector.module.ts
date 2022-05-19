@@ -45,7 +45,6 @@ export class ReflectorModule {
     this.kappaSigmaMu = new KappaSigmaMu(this.connection, this.mqtt);
 
     this.mqtt.onEvent('validator', this.onValidatorTopic.bind(this));
-    this.mqtt.onEvent('operator', this.onOperatorTopic.bind(this));
 
     await this.mqtt.connect();
 
@@ -94,10 +93,6 @@ export class ReflectorModule {
         this.workersCount--;
       }
     }
-  }
-
-  private async onOperatorTopic(operatorId: string, operator) {
-    console.log('onOperatorTopic:::');
   }
 
   async onModuleDestroy() {
