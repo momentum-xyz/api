@@ -13,6 +13,7 @@ import { HighFiveService } from '../../high-five/high-five.service';
 import { EventsService } from '../../events/events.service';
 import { WorldDefinitionService } from '../../world-definition/world-definition.service';
 import { WorldDefinition } from '../../world-definition/world-definition.entity';
+import { Queryable } from '../../reflector/interfaces';
 
 export interface KusamaSessionStat {
   currentSessionIndex: number;
@@ -164,9 +165,27 @@ export class StatService implements OnModuleInit {
     ]);
   }
 
+  async getKusamaWorldId(conn: Queryable): Promise<string> {
+    const sql = `
+        SELECT BIN_TO_UUID(id) AS spaceId
+        FROM world_definition
+        WHERE JSON_EXTRACT(config, '$.kind') = "Kusama";
+    `;
+
+    const rows = await conn.query(sql);
+
+    if (rows.length === 0) {
+      throw new Error('Can not find worldId by Kusama world_definitions table');
+    }
+
+    return rows[0].spaceId;
+  }
+
   async createStat(stat: Stat) {
+    const worldId: string = await this.getKusamaWorldId(this.statRepository);
+
     await this.statRepository.query('INSERT INTO stats (`worldId`, `name`, `value`, `columnId`) VALUES (?, ?, ?, ?)', [
-      uuidToBytes('A91C9235-B545-43CF-8A3A-26B0FD70FE73'),
+      uuidToBytes(worldId),
       stat.name,
       stat.value,
       stat.columnId,
