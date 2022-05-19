@@ -5,6 +5,7 @@ import { KusamaOperator } from '../KusamaOperator';
 import { escape } from 'mysql';
 import { u8aToHex } from '@polkadot/util';
 import { decodeAddress } from '@polkadot/util-crypto';
+import { findOperatorName } from '../functions/findOperatorName';
 
 export async function unclaimSpace(conn: Queryable, wallet: string, kusamaOperator: KusamaOperator): Promise<void> {
   console.log('Unclaim Space ', wallet);
@@ -131,10 +132,12 @@ export async function claimSpace(conn: Queryable, wallet: string, kusamaOperator
 
   let operatorSpaceId: string = null;
 
+  const operatorName = findOperatorName(operatorNodes);
+
   if (parentSpaceIds.length === 0) {
     console.log('CASE 0');
     const uiTypeId = await getUiTypeId(conn);
-    operatorSpaceId = await kusamaOperator.create_legacy(wallet, wallet, uiTypeId, config);
+    operatorSpaceId = await kusamaOperator.create_legacy(wallet, operatorName, uiTypeId, config);
     console.log('Created operator space ID = ' + operatorSpaceId);
   } else if (parentSpaceIds.length === 1) {
     console.log('CASE 1');

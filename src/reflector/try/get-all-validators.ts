@@ -2,6 +2,7 @@ import { Connection } from 'typeorm';
 import { getAllValidators, getKusamaConfig } from '../functions';
 import { ValidatorSpace } from '../interfaces';
 import { findConnected } from '../findConnected';
+import { findOperatorName } from '../functions/findOperatorName';
 
 async function main() {
   const connection = new Connection({
@@ -30,12 +31,18 @@ async function main() {
   console.log(taken);
   console.log(taken.length);
 
+  let c = 0;
   for (const validator of validators) {
+    c++;
+    if (c > 100) {
+      // break;
+    }
     const kusamaId = validator.kusamaId;
     const taken = [];
     findConnected(kusamaId, validators, taken);
-    if (taken.length > 1) {
-      console.log(kusamaId, taken.length, validator.name);
+    if (taken.length > 0) {
+      console.log(taken.map((x) => x.name));
+      console.log(kusamaId, taken.length, validator.name, '|||', findOperatorName(taken));
     }
   }
 
