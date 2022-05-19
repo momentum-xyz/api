@@ -1,0 +1,15 @@
+{
+  "type": "mysql",
+  "host": "dev.odyssey.ninja",
+  "port": 3306,
+  "username": "root",
+  "password": "BdBffHZB",
+  "database": "momentum2",
+  "entities": ["dist/agora/*.entity.{ts,js}", "dist/channel/*.entity.{ts,js}", "dist/miro/*.entity.{ts,js}"],
+  "migrations": ["dist/migrations/**/*.{ts,js}"],
+  "synchronize": true,
+  "logging": false,
+  "cli": {
+    "migrationsDir": "src/migrations"
+  }
+}
