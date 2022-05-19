@@ -30,9 +30,9 @@ export async function getUiTypeId(connection: Queryable): Promise<string> {
 }
 
 export async function getValidatorSpaceId(
-    conn: Queryable,
-    validatorId: string,
-    config: KusamaConfig,
+  conn: Queryable,
+  validatorId: string,
+  config: KusamaConfig,
 ): Promise<{ spaceId: string; parentId: string; isActive: number } | null> {
   const sql = `
     SELECT BIN_TO_UUID(spaces.id)       AS spaceId,
@@ -87,9 +87,9 @@ export async function getValidatorSpaceId(
 // }
 
 export async function getTotalKusamaValidators(
-    conn: Queryable,
-    operatorSpaceId: string,
-    config: KusamaConfig,
+  conn: Queryable,
+  operatorSpaceId: string,
+  config: KusamaConfig,
 ): Promise<{ active: number; total: number }> {
   if (operatorSpaceId === config.spaces.validator_cloud) {
     return { active: 1, total: 1 };
@@ -193,7 +193,7 @@ function getNames(obj): { selfName: string; parentName: string | null } {
   let parentName = null;
   if (obj.identity && obj.identity.displayParent && obj.identity.displayParent !== '') {
     parentName = obj.identity.displayParent;
-  } else if (obj.entity && obj.entity.name && obj.entity.name !== '') {
+  } else if (obj.entity && obj.entity.name && obj.entity.name !== '' && obj.entity.name !== 'none') {
     parentName = obj.entity.name;
   }
 
@@ -230,9 +230,9 @@ export async function renderName(text: string) {
     };
 
     const frameResponse = await axios.post(
-        `${process.env.RENDER_INTERNAL_URL}/render/addframe`,
-        { ...jsonObject },
-        options,
+      `${process.env.RENDER_INTERNAL_URL}/render/addframe`,
+      { ...jsonObject },
+      options,
     );
 
     return frameResponse.data.hash;
