@@ -101,6 +101,7 @@ export class ReflectorModule {
 
   @OnEvent('user_authorised')
   async handleUserAuthorised(userId: string) {
+    console.log('handleUserAuthorised.start userId=' + userId);
     let sql = `SELECT BIN_TO_UUID(id) AS networkId
                FROM networks
                WHERE name = 'polkadot'`;
@@ -108,6 +109,7 @@ export class ReflectorModule {
     let rows: any[] = await this.connection.query(sql);
 
     const networkId = rows[0].networkId;
+    console.log('handleUserAuthorised.networkFound id=' + networkId);
 
     sql = `SELECT wallet
            FROM user_wallets
@@ -116,12 +118,16 @@ export class ReflectorModule {
 
     rows = await this.connection.query(sql);
 
+    console.log('handleUserAuthorised.numberOfWalletsFound =' + rows.length);
+
     if (rows.length !== 1) {
       return;
     }
 
     const hexWallet = rows[0].wallet;
+    console.log('handleUserAuthorised.hexWallet =' + rows[0].wallet);
     const wallet = encodeAddress(hexWallet);
+    console.log(`handleUserAuthorised.complete userID = ${userId} wallet = ${wallet}`);
     console.log(`Auth user ID = ${userId} wallet = ${wallet}`);
 
     let newWallet = wallet;
