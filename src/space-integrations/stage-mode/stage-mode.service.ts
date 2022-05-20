@@ -61,11 +61,26 @@ export class StageModeService {
 
   async handleRequestAcceptDecline(space: Space, requestor: User, status: MessageBusAdmitStatus, worldId: Buffer) {
     // Moderator accepts or declines a request made by an audience member.
+    // Notify the audience member:
     this.client.publish(
       `user_control/${bytesToUuid(worldId)}/${bytesToUuid(requestor.id)}/relay/stage`,
       JSON.stringify({
         action: StageModeActions.ACCEPT_REQUEST,
+        userId: bytesToUuid(requestor.id),
         value: status,
+      }),
+      false,
+      uuidv4(),
+    );
+    // Notify the (other) moderators)
+    const recipientIds: string[] = await this.userSpaceService.getSpaceUsersDesc(space.id);
+    this.client.publish(
+      `space_control/${bytesToUuid(space.id)}/relay/stage`,
+      JSON.stringify({
+        action: StageModeActions.ACCEPT_REQUEST,
+        userId: bytesToUuid(requestor.id),
+        value: status,
+        users: recipientIds,
       }),
       false,
       uuidv4(),
