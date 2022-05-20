@@ -13,6 +13,7 @@ import { escape } from 'mysql';
 import { v4 as uuidv4 } from 'uuid';
 import { KusamaOperator } from './KusamaOperator';
 import { MQTT } from './MQTT';
+import { formatMicroKSM, picoKSM_to_microKSM } from './functions/picoKSM_to_KSM';
 
 export class KusamaValidator {
   private readonly kusamaOperator: KusamaOperator;
@@ -289,6 +290,7 @@ export class KusamaValidator {
     const kusama_validator_is_online = 1;
     const kusama_validator_is_selected = validator.status === 'active' ? 1 : 0;
     const kusama_validator_is_parachain = 1;
+    const ownStake = formatMicroKSM(picoKSM_to_microKSM(validator.ownStake));
     // const kusama_active_total = active;
     const kusama_operator_total_stake = '0';
 
@@ -298,6 +300,11 @@ export class KusamaValidator {
                     UUID_TO_BIN(${escape(spaceId)}),
                     0,
                     ${escape(validatorId)}),
+
+                   (UUID_TO_BIN(${escape(attr.kusama_validator_ownstake)}),
+                    UUID_TO_BIN(${escape(spaceId)}),
+                    0,
+                    ${escape(ownStake)}),
 
                    (UUID_TO_BIN(${escape(attr.kusama_validator_parent_id)}),
                     UUID_TO_BIN(${escape(spaceId)}),

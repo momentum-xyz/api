@@ -62,7 +62,7 @@ export interface ValidatorInfo {
   status: 'active' | 'candidate' | 'inactive' | string;
   eraPoints?: number; // 100;
   totalStake?: number; // 10;
-  ownStake?: number; //1;
+  ownStake: string; //1;
   commission: string; // 3;
   commissionLongFormat: string; // 3;
   nominators: any[]; // ['Cat8TYNUzyH6VRzTHq9BzW6qw2htkNKSbooqBQnCyAAj66d', 'Caz26n5CBBBpnfETL6SpVWtanwygyJ5w8kdHmTuc8E9BNuf'];

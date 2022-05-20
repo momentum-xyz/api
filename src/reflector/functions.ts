@@ -145,7 +145,7 @@ export function parseToValidatorInfo(obj: Record<string, any>): ValidatorInfo {
     commission: 0.1,
     status: 'active',
     name: 'Mischa2',
-    ownStake: 0,
+    ownStake: '0',
     totalStake: 0,
     nominators: [{ address: 'GkUaCrjai8ZCNTwYNMbnkxRpdNVGxPexSR5cq4VRKbfJvna', stake: 0 }],
     entity: { name: 'none', accountId: 'none' },
@@ -169,6 +169,7 @@ export function parseToValidatorInfo(obj: Record<string, any>): ValidatorInfo {
     status: obj.status,
     commission: obj.commission ? Math.floor(obj.commission * 100) + '%' : '',
     commissionLongFormat: obj.commission ? Math.floor(obj.commission * 100) + '% COMMISSION' : '',
+    ownStake: obj.ownStake ? obj.ownStake : '0',
     nominators: obj.nominators,
     validatorAccountDetails: {
       name: fullName,

@@ -8,7 +8,7 @@ const o3: ValidatorInfo = {
   status: 'active',
   eraPoints: 2300,
   totalStake: 100.0,
-  ownStake: 2.832,
+  ownStake: '2832',
   commission: '3%',
   commissionLongFormat: '3% COMMISSION',
   nominators: ['CiKJhUKFr621yiuokou4REmaWo1U4GYgZBn2B8Hqxp8xcEn', 'Cj2Xnr7qBs92AydeYPqpxGQjSwP3bh6BSVmRDFbnaHzAAUj'],
