@@ -66,28 +66,37 @@ export class KusamaValidator {
     if (obj) {
       spaceId = obj.spaceId;
       parentId = obj.parentId;
-      isActive = obj.parentId;
+      isActive = obj.isActive;
     }
+
+    let change: ChangedSpaces;
 
     if (!spaceId && !validator.validatorAccountDetails) {
       console.log('Asked to removing non-existed validator. Nothing to do');
-      return { created: [], updated: [] };
+      change = { created: [], updated: [] };
     }
 
     if (!spaceId && validator.validatorAccountDetails) {
       console.log('CREATE');
-      return await this.create(this.connection, validatorId, validator, config);
+      change = await this.create(this.connection, validatorId, validator, config);
     }
 
     if (spaceId && validator.validatorAccountDetails) {
       // console.log('UPDATE');
-      return await this.update(this.connection, spaceId, parentId, validatorId, validator, config);
+      change = await this.update(this.connection, spaceId, parentId, validatorId, validator, config);
     }
 
     if (spaceId && !validator.validatorAccountDetails) {
       console.log('DELETE');
-      return await this.delete(this.connection, spaceId);
+      change = await this.delete(this.connection, spaceId);
     }
+
+    if (parentId) {
+      const { active, total } = await getTotalKusamaValidators(this.connection, parentId, config);
+      await KusamaValidator.insertOrUpdateOperatorAttribute(this.connection, parentId, active, total, config);
+    }
+
+    return change;
   }
 
   private async delete(conn: Queryable, spaceId: string): Promise<ChangedSpaces> {
@@ -119,10 +128,10 @@ export class KusamaValidator {
     validator: ValidatorInfo,
     config: KusamaConfig,
   ): Promise<ChangedSpaces> {
-    // return {
-    //   created: [],
-    //   updated: [],
-    // };
+    const change: ChangedSpaces = {
+      created: [],
+      updated: [],
+    };
 
     const isValidatorVisible = this.isValidatorVisible(validator.status === 'active', parentId, config);
 
@@ -147,15 +156,15 @@ export class KusamaValidator {
       await runner.query('COMMIT');
 
       if (currVisible !== +isValidatorVisible) {
-        await this.mqtt.publish(`updates/spaces/changed`, parentId, false);
+        console.log(
+          `Visibility changed from ${currVisible} to ${isValidatorVisible} updating parent space = ${parentId}`,
+        );
+        change.updated.push(parentId);
       } else {
-        await this.mqtt.publish(`updates/spaces/changed`, spaceId, false);
+        change.updated.push(spaceId);
       }
 
-      return {
-        created: [],
-        updated: [spaceId],
-      };
+      return change;
     } catch (e) {
       console.error(e);
       await runner.query('ROLLBACK');
@@ -288,26 +297,11 @@ export class KusamaValidator {
   ) {
     const attr = config.attributes;
 
-    const { active, total } = await getTotalKusamaValidators(conn, parentSpaceId, config);
-
-    // Update operator counters too
-    // if (config.spaces.validator_cloud !== parentSpaceId) {
-    //   await this.insertOrUpdateOperatorAttribute__kusama_active_total(conn, parentSpaceId, active, total, config);
-    // }
-
-    // const kusama_total_validators_by_operator = `${active} / ${total}`;
-
-    let kusama_validator_is_active = 1;
-    if (validator.status === 'active') {
-      kusama_validator_is_active = 2;
-    }
-
     const kusama_validator_is_online = 1;
+    const kusama_validator_is_active = validator.status === 'active' ? 2 : 1;
     const kusama_validator_is_selected = validator.status === 'active' ? 1 : 0;
     const kusama_validator_is_parachain = 1;
     const ownStake = formatMicroKSM(picoKSM_to_microKSM(validator.ownStake));
-    // const kusama_active_total = active;
-    const kusama_operator_total_stake = '0';
 
     const judgements = validator.identity.judgements;
 
@@ -373,29 +367,27 @@ export class KusamaValidator {
 
     `;
     await conn.query(sql);
-
-    // await updateOperatorCounters(conn, parentSpaceId, config, active, total);
   }
 
-  // private async insertOrUpdateOperatorAttribute__kusama_active_total(
-  //   conn: Queryable,
-  //   operatorSpaceId: string,
-  //   active: number,
-  //   total: number,
-  //   config: KusamaConfig,
-  // ) {
-  //   const value = `${active}/${total}`;
-  //
-  //   const sql = `
-  //       INSERT INTO space_attributes (attributeId, spaceId, flag, value)
-  //       VALUES (UUID_TO_BIN(${escape(config.attributes.kusama_active_total)}),
-  //               UUID_TO_BIN(${escape(operatorSpaceId)}),
-  //               0,
-  //               ${escape(value)}) AS new
-  //
-  //       ON DUPLICATE KEY UPDATE flag  = new.flag,
-  //                               value = new.value
-  //   `;
-  //   await conn.query(sql);
-  // }
+  public static async insertOrUpdateOperatorAttribute(
+    conn: Queryable,
+    operatorSpaceId: string,
+    active: number,
+    total: number,
+    config: KusamaConfig,
+  ) {
+    const value = `${active}/${total}`;
+
+    const sql = `
+        INSERT INTO space_attributes (attributeId, spaceId, flag, value)
+        VALUES (UUID_TO_BIN(${escape(config.attributes.kusama_operator_total_validators)}),
+                UUID_TO_BIN(${escape(operatorSpaceId)}),
+                0,
+                ${escape(value)}) AS new
+
+        ON DUPLICATE KEY UPDATE flag  = new.flag,
+                                value = new.value
+    `;
+    await conn.query(sql);
+  }
 }

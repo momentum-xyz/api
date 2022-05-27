@@ -1,9 +1,0 @@
-#!/bin/bash
-if [ "$#" -ne 1 ]; then
-    echo "Illegal number of parameters"
-fi
-newname=$1
-
-find . -path ./fixname -prune -o -path ./.git -prune -o  -type f  -exec sed -i ''  s/_TEMPLATE_/$newname/g {} +
-
-

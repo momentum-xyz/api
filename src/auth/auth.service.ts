@@ -80,9 +80,9 @@ export class AuthService {
         await this.userWalletService.create(userWallet);
 
         this.eventEmitter.emit('new_kusama_user', payload.web3_address);
+      } else {
+        console.error('getIdFromToken ERROR: No result from oidcService.validateIDToken');
       }
-
-      console.error('getIdFromToken ERROR: No result from oidcService.validateIDToken');
     } else if (issuer === process.env.OIDC_WEB3_URL && guestUser) {
       console.log('getIdFromToken CASE_2:  Issuer == OIDC_WEB3_URL and guest', request.user.sub);
       user.userType = await this.userTypeService.findOne(UserTypes.TEMPORARY_USER);

@@ -22,9 +22,9 @@ async function main() {
   // await client.subscribe('harvester/kusama/validators/#');
 
   setInterval(() => {
-    console.log(validators['CroiANffLtjz44LXp98NqmLxuUW5xxbsruZiRUXdeGFD82a']);
+    console.log(validators['Gf7EHcqRZiXCELr2xYjQXrxAzVcEFh5pEjvQdedKS2avGAj']);
     // console.log(validators['CroiANffLtjz44LXp98NqmLxuUW5xxbsruZiRUXdeGFD82a']);
-    // console.log(parents['GXaUd6gyCaEoBVzXnkLVGneCF3idnLNtNZs5RHTugb9dCpY']);
+    console.log(parents['Gf7EHcqRZiXCELr2xYjQXrxAzVcEFh5pEjvQdedKS2avGAj']);
   }, 1000);
 }
 
@@ -39,7 +39,7 @@ function onMessage(topic, message) {
   map[topic] = o;
   console.log(topic, total);
   validators[o.accountId] = o;
-  parents[o.entity.accountId] = true;
+  parents[o.identity.parent] = o;
   console.log('unique keys', Object.keys(map).length);
 }
 

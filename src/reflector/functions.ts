@@ -159,8 +159,12 @@ export function parseToValidatorInfo(obj: Record<string, any>): ValidatorInfo {
   }
 
   let entityAccountId = 'f'.repeat(47);
-  if (obj.entity && obj.entity.accountId != 'none' && obj.entity.accountId.length === 47) {
-    entityAccountId = obj.entity.accountId;
+  if (obj.identity && obj.identity.parent && obj.identity.parent != 'none' && obj.identity.parent.length === 47) {
+    entityAccountId = obj.identity.parent;
+  }
+
+  if (obj.parent && obj.parent.accountId && obj.parent.accountId != 'none' && obj.parent.accountId.length === 47) {
+    entityAccountId = obj.parent.accountId;
   }
 
   let judgements = null;

@@ -1,11 +1,12 @@
 import { Queryable, ValidatorSpace } from '../interfaces';
-import { getAllValidators, getKusamaConfig, getUiTypeId } from '../functions';
+import { getAllValidators, getKusamaConfig, getTotalKusamaValidators, getUiTypeId } from '../functions';
 import { findConnected } from '../findConnected';
 import { KusamaOperator } from '../KusamaOperator';
 import { escape } from 'mysql';
 import { u8aToHex } from '@polkadot/util';
 import { decodeAddress } from '@polkadot/util-crypto';
 import { findOperatorName } from '../functions/findOperatorName';
+import { KusamaValidator } from '../KusamaValidator';
 
 export async function unclaimSpace(conn: Queryable, wallet: string, kusamaOperator: KusamaOperator): Promise<void> {
   console.log('Unclaim Space ', wallet);
@@ -155,6 +156,9 @@ export async function claimSpace(conn: Queryable, wallet: string, kusamaOperator
 
   await updateParent(conn, operatorSpaceId, operatorNodes);
   await tryMakeAdmin(conn, wallet, operatorSpaceId);
+
+  const { active, total } = await getTotalKusamaValidators(this.connection, operatorSpaceId, config);
+  await KusamaValidator.insertOrUpdateOperatorAttribute(this.connection, operatorSpaceId, active, total, config);
 
   await kusamaOperator.mqtt.publish(`updates/spaces/changed`, config.spaces.operator_cloud, false);
   console.log('MQTT updates/spaces/changed', config.spaces.operator_cloud);
