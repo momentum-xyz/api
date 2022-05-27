@@ -1,0 +1,87 @@
+### Run this file in VS Code with the REST Client extension. Get a JWT token by logging into https://alpha.dev.odyssey.ninja/
+@jwt = Bearer 
+@baseApiUrl = http://localhost:4000/api/v3/backend
+@worldId = d83670c7-a120-47a4-892d-f9ec75604f74
+@spaceId = e2160550-b492-4b9e-9a0f-4ede76dbd3e1
+@tokenId = 67a5026e-90e6-4c32-9b97-d7e53935cfb5
+
+### Create token whitelist request
+POST {{baseApiUrl}}/token-whitelist-request HTTP/1.1
+content-type: application/json
+Authorization: {{jwt}}
+
+{
+    "tokenName": "TST",
+    "network": "moonbeam",
+    "tokenType": "ERC20",
+    "contractAddress": "0x0",
+    "worldId": "{{worldId}}"
+}
+
+### Delete token whitelist request
+DELETE {{baseApiUrl}}/token-whitelist-request/21ba0ea0-cf27-4ac7-b827-bb64efc528aa
+Authorization: {{jwt}}
+
+### Get all token whitelist requests for world
+GET {{baseApiUrl}}/token-whitelist-request/{{worldId}}
+Authorization: {{jwt}}
+
+### Approve token whitelist request
+POST {{baseApiUrl}}/token-whitelist-request/5729dae0-c3a4-4f8b-902c-6e4c3fe618e9 HTTP/1.1
+content-type: application/json
+Authorization: {{jwt}}
+
+{
+    "approved": true    
+}
+
+
+### List all tokens
+GET {{baseApiUrl}}/token
+Authorization: {{jwt}}
+
+### List all tokens for world
+GET {{baseApiUrl}}/token/{{worldId}}
+Authorization: {{jwt}}
+
+### Create token rule
+POST {{baseApiUrl}}/token-rule
+Authorization: {{jwt}}
+Content-Type: application/json
+
+{
+    "spaceId": "{{spaceId}}",
+    "tokenId": "{{tokenId}}",
+    "rule": {
+        "minBalance": 100
+    },
+    "name": "New test rule"
+}
+
+### Fetch token rules
+GET {{baseApiUrl}}/token-rule
+Authorization: {{jwt}}
+
+### Fetch token rule
+GET {{baseApiUrl}}/token-rule/5729dae0-c3a4-4f8b-902c-6e4c3fe618e9
+Authorization: {{jwt}}
+
+### Delete token rule
+DELETE {{baseApiUrl}}/token-rule/1d128384-a35f-43c3-a15e-57bd61038584
+Authorization: {{jwt}}
+
+### Functional Testing Helpers
+### Get all worlds
+GET {{baseApiUrl}}/space/worlds
+Authorization: {{jwt}}
+
+### Get spaces of which user is space admin
+GET {{baseApiUrl}}/space/owned-spaces
+Authorization: {{jwt}}
+
+### Get space detail
+GET {{baseApiUrl}}/space/{{spaceId}}
+Authorization: {{jwt}}
+
+### Get all users
+GET {{baseApiUrl}}/
