@@ -126,7 +126,7 @@ export class ReflectorModule {
 
     const hexWallet = rows[0].wallet;
     console.log('handleUserAuthorised.hexWallet =' + rows[0].wallet);
-    const wallet = encodeAddress(hexWallet);
+    const wallet = encodeAddress(hexWallet, 2);
     console.log(`handleUserAuthorised.complete userID = ${userId} wallet = ${wallet}`);
     console.log(`Auth user ID = ${userId} wallet = ${wallet}`);
 
