@@ -38,6 +38,7 @@ import { Unprotected } from '../auth/decorators/unprotected.decorator';
 import { UiTypes } from '../ui-type/ui-type.interface';
 import { paginateCollection, PaginatedCollection } from '../utils/pagination';
 import { UserTypes } from '../user-type/user-type.interface';
+import { SpaceAssignGuard } from './space-assign.guard';
 
 @ApiTags('space')
 @Controller('space')
@@ -594,7 +595,7 @@ export class SpaceController {
   })
   @ApiBearerAuth()
   @Post('assign-user')
-  @UseGuards(SpaceGuard)
+  @UseGuards(SpaceAssignGuard)
   async assignUser(@Body() request: UserSpaceDto): Promise<any> {
     const space: Space = await this.spaceService.findOne(uuidToBytes(request.spaceId));
     const user: User = await this.userService.findOne(uuidToBytes(request.userId));
@@ -623,7 +624,7 @@ export class SpaceController {
   })
   @ApiBearerAuth()
   @Post('unassign-user')
-  @UseGuards(SpaceGuard)
+  @UseGuards(SpaceAssignGuard)
   async removeUser(@Body() request: UserSpaceDto, @Res() response: Response): Promise<Response> {
     const space: Space = await this.spaceService.findOne(uuidToBytes(request.spaceId));
     const user: User = await this.userService.findOne(uuidToBytes(request.userId));
