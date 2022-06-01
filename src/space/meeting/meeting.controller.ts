@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Controller, HttpException, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { UserService } from '../../user/user.service';
@@ -11,7 +11,7 @@ import { uuidToBytes } from '../../utils/uuid-converter';
 
 @ApiTags('meeting')
 @Controller('meeting')
-export class SpaceController {
+export class MeetingController {
   constructor(
     private spaceService: SpaceService,
     private userService: UserService,
