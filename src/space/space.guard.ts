@@ -30,6 +30,10 @@ export class SpaceGuard implements CanActivate {
       space = await this.spaceService.findOne(uuidToBytes(request.body.spaceId));
     }
 
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
     const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
 
     if (!user) {
