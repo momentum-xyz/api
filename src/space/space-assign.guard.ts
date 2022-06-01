@@ -18,6 +18,10 @@ export class SpaceAssignGuard implements CanActivate {
     const space = await this.spaceService.findOne(uuidToBytes(request.body.spaceId));
     const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
 
+    if (!space) {
+      throw new NotFoundException('Space not found');
+    }
+
     if (!user) {
       throw new NotFoundException('User not found');
     }

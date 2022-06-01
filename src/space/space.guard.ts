@@ -36,12 +36,6 @@ export class SpaceGuard implements CanActivate {
       throw new NotFoundException('User not found');
     }
 
-    const canAccess: boolean = await this.userSpaceService.canAccess(space, user);
-
-    if (!canAccess) {
-      return !space.secret;
-    } else {
-      return canAccess;
-    }
+    return this.userSpaceService.canAccess(space, user);
   }
 }
