@@ -86,7 +86,7 @@ export class SyncEvent {
       const futureDate: Moment = moment(futureEvent.start);
       const diff = futureDate.diff(date, 'seconds');
       if (diff <= 11) {
-        await this.publish(`space_control/${futureEvent.id}/relay/event`, futureEvent.id, false);
+        await this.publish(`space_control/${futureEvent.spaceId}/relay/event`, futureEvent.id, false);
       }
     }
   }
