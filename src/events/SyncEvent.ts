@@ -86,7 +86,14 @@ export class SyncEvent {
       const futureDate: Moment = moment(futureEvent.start);
       const diff = futureDate.diff(date, 'seconds');
       if (diff <= 11) {
-        await this.publish(`space_control/${futureEvent.spaceId}/relay/event`, futureEvent.id, false);
+        await this.publish(
+          `space_control/${futureEvent.spaceId}/relay/event`,
+          JSON.stringify({
+            name: futureEvent.title,
+            start: futureEvent.start,
+          }),
+          false,
+        );
       }
     }
   }
@@ -105,6 +112,7 @@ export class SyncEvent {
     return rows.map((row) => {
       const e: Event = {
         id: row.id,
+        title: row.title,
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
@@ -128,6 +136,7 @@ export class SyncEvent {
     return rows.map((row) => {
       const e: Event = {
         id: row.id,
+        title: row.title,
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
@@ -209,6 +218,7 @@ export class SyncEvent {
 
 type Event = {
   id: string;
+  title: string;
   spaceId: string;
   start: Date;
   timestamp: number;
