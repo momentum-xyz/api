@@ -1,3 +1,5 @@
+import * as moment from 'moment';
+import { Moment } from 'moment';
 import { escape } from 'mysql';
 import { Connection } from 'typeorm';
 import { getKusamaConfig } from '../reflector/functions';
@@ -18,7 +20,7 @@ export class SyncEvent {
   private async onMessage(topic: string, message: Buffer) {
     if (topic === 'control/periodic/reftime') {
       if (message.toString()) {
-        await this.syncAll();
+        await this.syncAll(message.toString());
       }
     }
   }
@@ -66,17 +68,49 @@ export class SyncEvent {
     await this.publish(`updates/events/changed`, eventId, false);
   }
 
-  public async syncAll() {
+  public async syncAll(timeStamp: string) {
+    const date: Moment = moment(timeStamp);
     const config = await getKusamaConfig(this.connection);
 
     const events = await this.selectEvents();
+    const futureEvents = await this.getFutureEvents();
 
     await this.updateAttributeForSpaces(events, config);
 
     for (const event of events) {
       await this.publish(`updates/spaces/changed`, event.spaceId, false);
-      await this.publish(`updates/events/changed`, event.eventId, false);
+      await this.publish(`updates/events/changed`, event.id, false);
     }
+
+    for (const futureEvent of futureEvents) {
+      const futureDate: Moment = moment(futureEvent.start);
+      const diff = futureDate.diff(date, 'seconds');
+      if (diff <= 11) {
+        await this.publish(`space_control/${futureEvent.id}/relay/event`, futureEvent.id, false);
+      }
+    }
+  }
+
+  private async getFutureEvents(): Promise<Event[]> {
+    const sql = `
+        SELECT BIN_TO_UUID(id) AS id,
+               BIN_TO_UUID(spaceId) AS spaceId,
+               start
+        FROM space_integration_events
+        WHERE true
+          AND start >= NOW()
+    `;
+
+    const rows = (await this.connection.query(sql)) as Event[];
+    return rows.map((row) => {
+      const e: Event = {
+        id: row.id,
+        spaceId: row.spaceId,
+        start: row.start,
+        timestamp: row.start.getTime(),
+      };
+      return e;
+    });
   }
 
   private async selectEvents(): Promise<Event[]> {
@@ -91,18 +125,15 @@ export class SyncEvent {
     `;
 
     const rows = (await this.connection.query(sql)) as Event[];
-    // console.log(rows);
-    const events = rows.map((row) => {
+    return rows.map((row) => {
       const e: Event = {
-        eventId: row.eventId,
+        id: row.id,
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
       };
       return e;
     });
-
-    return events;
   }
 
   private async updateAttributeForSpaces(events: Event[], config: KusamaConfig) {
@@ -177,7 +208,7 @@ export class SyncEvent {
 }
 
 type Event = {
-  eventId: string;
+  id: string;
   spaceId: string;
   start: Date;
   timestamp: number;
