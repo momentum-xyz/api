@@ -120,9 +120,11 @@ export class SpaceIntegrationsService {
       case IntegrationTypes.STAGE_MODE:
         const spaceIntegrationUsers = await this.spaceIntegrationUsersService.findWhereSpace(spaceIntegration);
         for (const sIU of spaceIntegrationUsers) {
-          sIU.flag = SpaceIntegrationUserStatus.LEFT;
-          await this.spaceIntegrationUsersService.updateStatus(sIU);
-          await this.stageModeService.handleLeave(sIU);
+          if (sIU.flag === SpaceIntegrationUserStatus.JOINED) {
+            sIU.flag = SpaceIntegrationUserStatus.LEFT;
+            await this.spaceIntegrationUsersService.updateStatus(sIU);
+            await this.stageModeService.handleLeave(sIU);
+          }
         }
         await this.stageModeService.update(spaceIntegration);
         break;
