@@ -157,8 +157,8 @@ export async function claimSpace(conn: Queryable, wallet: string, kusamaOperator
   await updateParent(conn, operatorSpaceId, operatorNodes);
   await tryMakeAdmin(conn, wallet, operatorSpaceId);
 
-  const { active, total } = await getTotalKusamaValidators(conn, operatorSpaceId, config);
-  await KusamaValidator.insertOrUpdateOperatorAttribute(conn, operatorSpaceId, active, total, config);
+  const { active, total } = await getTotalKusamaValidators(this.connection, operatorSpaceId, config);
+  await KusamaValidator.insertOrUpdateOperatorAttribute(this.connection, operatorSpaceId, active, total, config);
 
   await kusamaOperator.mqtt.publish(`updates/spaces/changed`, config.spaces.operator_cloud, false);
   console.log('MQTT updates/spaces/changed', config.spaces.operator_cloud);
