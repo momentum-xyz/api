@@ -33,7 +33,8 @@ export class MeetingController {
     const user: User = await this.userService.findOne(uuidToBytes(userId));
 
     if (space && user) {
-      await this.meetingService.handleMute(space, user);
+      const worldId: Buffer = await this.spaceService.getWorldId(space);
+      await this.meetingService.handleMute(worldId, space, user);
       return response.status(HttpStatus.OK).json({
         message: 'Successfully dispatched mute message to user',
       });
@@ -63,7 +64,8 @@ export class MeetingController {
     const user: User = await this.userService.findOne(uuidToBytes(userId));
 
     if (space && user) {
-      await this.meetingService.handleKick(space, user);
+      const worldId: Buffer = await this.spaceService.getWorldId(space);
+      await this.meetingService.handleKick(worldId, space, user);
       return response.status(HttpStatus.OK).json({
         message: 'Successfully dispatched kick message to user',
       });

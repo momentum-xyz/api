@@ -19,6 +19,7 @@ export class MeetingService {
     this.client.publish(
       `space_control/${bytesToUuid(space.id)}/relay/meeting`,
       JSON.stringify({
+        spaceId: bytesToUuid(space.id),
         action: MeetingActions.MUTE_ALL,
       }),
       false,
@@ -26,10 +27,14 @@ export class MeetingService {
     );
   }
 
-  async handleMute(space: Space, subject: User) {
+  /** 
+   * Send message to the user who is getting muted.
+   */
+  async handleMute(worldId: Buffer, space: Space, subject: User) {
     this.client.publish(
-      `space_control/${bytesToUuid(space.id)}/${bytesToUuid(subject.id)}/relay/meeting`,
+      `user_control/${bytesToUuid(worldId)}/${bytesToUuid(subject.id)}/relay/meeting`,
       JSON.stringify({
+        spaceId: bytesToUuid(space.id),
         action: MeetingActions.MUTE,
       }),
       false,
@@ -37,10 +42,11 @@ export class MeetingService {
     );
   }
 
-  async handleKick(space: Space, subject: User) {
+  async handleKick(worldId: Buffer, space: Space, subject: User) {
     this.client.publish(
-      `space_control/${bytesToUuid(space.id)}/${bytesToUuid(subject.id)}/relay/meeting`,
+      `user_control/${bytesToUuid(worldId)}/${bytesToUuid(subject.id)}/relay/meeting`,
       JSON.stringify({
+        spaceId: bytesToUuid(space.id),
         action: MeetingActions.KICK,
       }),
       false,
