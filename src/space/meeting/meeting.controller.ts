@@ -1,4 +1,4 @@
-import { Controller, HttpException, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
+import { Controller, HttpException, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { UserService } from '../../user/user.service';
@@ -8,6 +8,7 @@ import { MeetingService } from './meeting.service';
 import { Space } from '../space.entity';
 import { User } from '../../user/user.entity';
 import { uuidToBytes } from '../../utils/uuid-converter';
+import { TokenInterface } from '../../auth/auth.interface';
 
 @ApiTags('meeting')
 @Controller('meeting')
@@ -90,11 +91,15 @@ export class MeetingController {
   @ApiBearerAuth()
   @Post(':spaceId/users/mute-all')
   @UseGuards(SpaceGuard)
-  async muteAllUsers(@Param('spaceId') spaceId, @Res() response: Response): Promise<Response> {
+  async muteAllUsers(
+    @Param('spaceId') spaceId,
+    @Req() request: TokenInterface,
+    @Res() response: Response,
+  ): Promise<Response> {
     const space: Space = await this.spaceService.findOne(uuidToBytes(spaceId));
 
     if (space) {
-      await this.meetingService.handleMuteAll(space);
+      await this.meetingService.handleMuteAll(space, request.user.sub);
       return response.status(HttpStatus.OK).json({
         message: 'Successfully dispatched mute-all message',
       });

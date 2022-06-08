@@ -15,11 +15,12 @@ export enum MeetingActions {
 export class MeetingService {
   constructor(private client: MqttService) {}
 
-  async handleMuteAll(space: Space) {
+  async handleMuteAll(space: Space, moderatorId: string) {
     this.client.publish(
       `space_control/${bytesToUuid(space.id)}/relay/meeting`,
       JSON.stringify({
         spaceId: bytesToUuid(space.id),
+        moderatorId: moderatorId,
         action: MeetingActions.MUTE_ALL,
       }),
       false,
