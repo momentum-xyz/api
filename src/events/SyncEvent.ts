@@ -103,6 +103,7 @@ export class SyncEvent {
     const sql = `
         SELECT BIN_TO_UUID(id) AS id,
                BIN_TO_UUID(spaceId) AS spaceId,
+               title,
                start
         FROM space_integration_events
         WHERE true
