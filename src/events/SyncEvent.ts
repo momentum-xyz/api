@@ -105,7 +105,7 @@ export class SyncEvent {
              BIN_TO_UUID(sei.spaceId)      AS spaceId,
              sei.title,
              sei.start,
-             GetParentWorldByID(spaces.id) AS worldId
+             BIN_TO_UUID(GetParentWorldByID(spaces.id)) AS worldId
       FROM space_integration_events sei
              JOIN spaces ON spaces.id = sei.spaceId
       WHERE true
