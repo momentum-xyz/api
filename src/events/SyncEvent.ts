@@ -89,6 +89,7 @@ export class SyncEvent {
         await this.publish(
           `space_control/${futureEvent.spaceId}/relay/event`,
           JSON.stringify({
+            spaceId: futureEvent.spaceId,
             name: futureEvent.title,
             start: futureEvent.start,
           }),
