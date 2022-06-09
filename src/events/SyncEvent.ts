@@ -10,7 +10,7 @@ import { Client } from 'mqtt';
 export class SyncEvent {
   private static NO_EVENT = 'No upcoming events';
 
-  constructor(private readonly connection: Connection, private client: AsyncClient | Client) {}
+  constructor(private readonly connection: Connection, private client: AsyncClient | Client | any) {}
 
   public async subscribe() {
     this.client.on('message', this.onMessage.bind(this));
@@ -87,7 +87,7 @@ export class SyncEvent {
       const diff = futureDate.diff(date, 'seconds');
       if (diff <= 11) {
         await this.publish(
-          `space_control/${futureEvent.spaceId}/relay/event`,
+          `space_control/${futureEvent.worldId}/relay/event`,
           JSON.stringify({
             spaceId: futureEvent.spaceId,
             name: futureEvent.title,
@@ -101,13 +101,15 @@ export class SyncEvent {
 
   private async getFutureEvents(): Promise<Event[]> {
     const sql = `
-        SELECT BIN_TO_UUID(id) AS id,
-               BIN_TO_UUID(spaceId) AS spaceId,
-               title,
-               start
-        FROM space_integration_events
-        WHERE true
-          AND start >= NOW()
+      SELECT BIN_TO_UUID(sei.id)           AS id,
+             BIN_TO_UUID(sei.spaceId)      AS spaceId,
+             sei.title,
+             sei.start,
+             GetParentWorldByID(spaces.id) AS worldId
+      FROM space_integration_events sei
+             JOIN spaces ON spaces.id = sei.spaceId
+      WHERE true
+        AND start >= NOW()
     `;
 
     const rows = (await this.connection.query(sql)) as Event[];
@@ -118,6 +120,7 @@ export class SyncEvent {
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
+        worldId: row.worldId
       };
       return e;
     });
@@ -224,4 +227,5 @@ type Event = {
   spaceId: string;
   start: Date;
   timestamp: number;
+  worldId?: string;
 };
