@@ -1,5 +1,3 @@
-import * as moment from 'moment';
-import { Moment } from 'moment';
 import { escape } from 'mysql';
 import { Connection } from 'typeorm';
 import { getKusamaConfig } from '../reflector/functions';
@@ -72,7 +70,6 @@ export class SyncEvent {
     const config = await getKusamaConfig(this.connection);
 
     const events = await this.selectEvents();
-    const futureEvents = await this.getFutureEvents(timeStamp);
 
     await this.updateAttributeForSpaces(events, config);
 
@@ -80,6 +77,8 @@ export class SyncEvent {
       await this.publish(`updates/spaces/changed`, event.spaceId, false);
       await this.publish(`updates/events/changed`, event.id, false);
     }
+
+    const futureEvents = await this.getFutureEvents(timeStamp);
 
     for (const futureEvent of futureEvents) {
       await this.publish(
@@ -100,7 +99,7 @@ export class SyncEvent {
              BIN_TO_UUID(sei.spaceId)        AS spaceId,
              sei.title,
              sei.start,
-             GetParentWorldByID(sei.spaceId) AS worldId
+             BIN_TO_UUID (GetParentWorldByID(sei.spaceId)) AS worldId
       FROM space_integration_events sei
       WHERE true
         AND start >= STR_TO_DATE(${escape(isoTimestamp)}, '%Y-%m-%dT%T.%fZ')
