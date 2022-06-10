@@ -8,6 +8,8 @@ import { Client } from 'mqtt';
 export class SyncEvent {
   private static NO_EVENT = 'No upcoming events';
 
+  private lastProcessedTimestamp: Date = null;
+
   constructor(private readonly connection: Connection, private client: AsyncClient | Client | any) {}
 
   public async subscribe() {
@@ -18,7 +20,17 @@ export class SyncEvent {
   private async onMessage(topic: string, message: Buffer) {
     if (topic === 'control/periodic/reftime') {
       if (message.toString()) {
-        await this.syncAll(message.toString());
+        const timestamp = message.toString();
+        if (!this.lastProcessedTimestamp) {
+          this.lastProcessedTimestamp = new Date(timestamp);
+        }
+        const deltaMilliseconds = new Date(timestamp).getTime() - this.lastProcessedTimestamp.getTime();
+        if (deltaMilliseconds >= 10_000) {
+          // This is a hack to avoid notification duplication
+          // caused by controller multiply instances
+          this.lastProcessedTimestamp = new Date(timestamp);
+          await this.syncAll(timestamp);
+        }
       }
     }
   }
