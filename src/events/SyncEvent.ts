@@ -69,7 +69,6 @@ export class SyncEvent {
   }
 
   public async syncAll(timeStamp: string) {
-    const date: Moment = moment(timeStamp);
     const config = await getKusamaConfig(this.connection);
 
     const events = await this.selectEvents();
@@ -83,19 +82,15 @@ export class SyncEvent {
     }
 
     for (const futureEvent of futureEvents) {
-      const futureDate: Moment = moment(futureEvent.start);
-      const diff = futureDate.diff(date, 'seconds');
-      if (diff <= 11) {
-        await this.publish(
-          `space_control/${futureEvent.worldId}/relay/event`,
-          JSON.stringify({
-            spaceId: futureEvent.spaceId,
-            name: futureEvent.title,
-            start: futureEvent.start,
-          }),
-          false,
-        );
-      }
+      await this.publish(
+        `space_control/${futureEvent.worldId}/relay/event`,
+        JSON.stringify({
+          spaceId: futureEvent.spaceId,
+          name: futureEvent.title,
+          start: futureEvent.start,
+        }),
+        false,
+      );
     }
   }
 
