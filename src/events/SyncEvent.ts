@@ -73,7 +73,7 @@ export class SyncEvent {
     const config = await getKusamaConfig(this.connection);
 
     const events = await this.selectEvents();
-    const futureEvents = await this.getFutureEvents();
+    const futureEvents = await this.getFutureEvents(timeStamp);
 
     await this.updateAttributeForSpaces(events, config);
 
@@ -99,17 +99,17 @@ export class SyncEvent {
     }
   }
 
-  private async getFutureEvents(): Promise<Event[]> {
+  private async getFutureEvents(isoTimestamp: string): Promise<Event[]> {
     const sql = `
-      SELECT BIN_TO_UUID(sei.id)           AS id,
-             BIN_TO_UUID(sei.spaceId)      AS spaceId,
+      SELECT BIN_TO_UUID(sei.id)             AS id,
+             BIN_TO_UUID(sei.spaceId)        AS spaceId,
              sei.title,
              sei.start,
-             BIN_TO_UUID(GetParentWorldByID(spaces.id)) AS worldId
+             GetParentWorldByID(sei.spaceId) AS worldId
       FROM space_integration_events sei
-             JOIN spaces ON spaces.id = sei.spaceId
       WHERE true
-        AND start >= NOW()
+        AND start >= STR_TO_DATE(${escape(isoTimestamp)}, '%Y-%m-%dT%T.%fZ')
+        AND start < DATE_ADD(STR_TO_DATE(${escape(isoTimestamp)}, '%Y-%m-%dT%T.%fZ'), INTERVAL 10 SECOND);
     `;
 
     const rows = (await this.connection.query(sql)) as Event[];
@@ -120,7 +120,7 @@ export class SyncEvent {
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
-        worldId: row.worldId
+        worldId: row.worldId,
       };
       return e;
     });
