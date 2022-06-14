@@ -8,7 +8,9 @@ import { Client } from 'mqtt';
 export class SyncEvent {
   private static NO_EVENT = 'No upcoming events';
 
-  constructor(private readonly connection: Connection, private client: AsyncClient | Client) {}
+  private lastProcessedTimestamp: Date = null;
+
+  constructor(private readonly connection: Connection, private client: AsyncClient | Client | any) {}
 
   public async subscribe() {
     this.client.on('message', this.onMessage.bind(this));
@@ -18,7 +20,17 @@ export class SyncEvent {
   private async onMessage(topic: string, message: Buffer) {
     if (topic === 'control/periodic/reftime') {
       if (message.toString()) {
-        await this.syncAll();
+        const timestamp = message.toString();
+        if (!this.lastProcessedTimestamp) {
+          this.lastProcessedTimestamp = new Date(timestamp);
+        }
+        const deltaMilliseconds = new Date(timestamp).getTime() - this.lastProcessedTimestamp.getTime();
+        if (deltaMilliseconds >= 10_000) {
+          // This is a hack to avoid notification duplication
+          // caused by controller multiply instances
+          this.lastProcessedTimestamp = new Date(timestamp);
+          await this.syncAll(timestamp);
+        }
       }
     }
   }
@@ -66,7 +78,7 @@ export class SyncEvent {
     await this.publish(`updates/events/changed`, eventId, false);
   }
 
-  public async syncAll() {
+  public async syncAll(timeStamp: string) {
     const config = await getKusamaConfig(this.connection);
 
     const events = await this.selectEvents();
@@ -75,8 +87,49 @@ export class SyncEvent {
 
     for (const event of events) {
       await this.publish(`updates/spaces/changed`, event.spaceId, false);
-      await this.publish(`updates/events/changed`, event.eventId, false);
+      await this.publish(`updates/events/changed`, event.id, false);
     }
+
+    const futureEvents = await this.getFutureEvents(timeStamp);
+
+    for (const futureEvent of futureEvents) {
+      await this.publish(
+        `space_control/${futureEvent.worldId}/relay/event`,
+        JSON.stringify({
+          spaceId: futureEvent.spaceId,
+          name: futureEvent.title,
+          start: futureEvent.start,
+        }),
+        false,
+      );
+    }
+  }
+
+  private async getFutureEvents(isoTimestamp: string): Promise<Event[]> {
+    const sql = `
+      SELECT BIN_TO_UUID(sei.id)             AS id,
+             BIN_TO_UUID(sei.spaceId)        AS spaceId,
+             sei.title,
+             sei.start,
+             BIN_TO_UUID (GetParentWorldByID(sei.spaceId)) AS worldId
+      FROM space_integration_events sei
+      WHERE true
+        AND start >= STR_TO_DATE(${escape(isoTimestamp)}, '%Y-%m-%dT%T.%fZ')
+        AND start < DATE_ADD(STR_TO_DATE(${escape(isoTimestamp)}, '%Y-%m-%dT%T.%fZ'), INTERVAL 10 SECOND);
+    `;
+
+    const rows = (await this.connection.query(sql)) as Event[];
+    return rows.map((row) => {
+      const e: Event = {
+        id: row.id,
+        title: row.title,
+        spaceId: row.spaceId,
+        start: row.start,
+        timestamp: row.start.getTime(),
+        worldId: row.worldId,
+      };
+      return e;
+    });
   }
 
   private async selectEvents(): Promise<Event[]> {
@@ -91,18 +144,16 @@ export class SyncEvent {
     `;
 
     const rows = (await this.connection.query(sql)) as Event[];
-    // console.log(rows);
-    const events = rows.map((row) => {
+    return rows.map((row) => {
       const e: Event = {
-        eventId: row.eventId,
+        id: row.id,
+        title: row.title,
         spaceId: row.spaceId,
         start: row.start,
         timestamp: row.start.getTime(),
       };
       return e;
     });
-
-    return events;
   }
 
   private async updateAttributeForSpaces(events: Event[], config: KusamaConfig) {
@@ -177,8 +228,10 @@ export class SyncEvent {
 }
 
 type Event = {
-  eventId: string;
+  id: string;
+  title: string;
   spaceId: string;
   start: Date;
   timestamp: number;
+  worldId?: string;
 };
