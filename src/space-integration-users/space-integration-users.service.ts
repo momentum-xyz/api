@@ -98,4 +98,24 @@ export class SpaceIntegrationUsersService {
       relations: ['spaceIntegration'],
     });
   }
+  async findAllWhereUserAndIntegration(
+    spaceIntegration: SpaceIntegration,
+    user: User,
+    limit = false,
+  ): Promise<SpaceIntegrationUser[]> {
+    let options;
+    options = {
+      where: {
+        spaceIntegration: spaceIntegration,
+        user: user,
+      },
+      relations: ['spaceIntegration', 'user'],
+    };
+
+    if (limit) {
+      options = { ...options, limit: 6 };
+    }
+
+    return await this.spaceIntegrationUserRepository.find({ ...options });
+  }
 }

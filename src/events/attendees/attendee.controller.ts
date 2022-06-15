@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  HttpStatus,
-  Param,
-  Post,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SpaceIntegrationUsersService } from '../../space-integration-users/space-integration-users.service';
 import { EventsGuard } from '../events.guard';
@@ -53,9 +44,9 @@ export class AttendeeController {
       spaceIntegrationUser.userId = user.id;
       spaceIntegrationUser.spaceId = space.id;
 
-      const sIU = await this.spaceIntegrationUserService.create(spaceIntegrationUser);
+      const attendee = await this.spaceIntegrationUserService.create(spaceIntegrationUser);
 
-      res.status(HttpStatus.OK).json(sIU);
+      res.status(HttpStatus.OK).json(attendee);
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
@@ -76,16 +67,16 @@ export class AttendeeController {
       const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
       const spaceIntegration = await this.spaceIntegrationService.findOneBySpaceAndIntegration(space, integrationType);
 
-      const sIU = await this.spaceIntegrationUserService.findDistinct(spaceIntegration, user);
+      const attendee = await this.spaceIntegrationUserService.findDistinct(spaceIntegration, user);
 
-      if (!sIU) {
+      if (!attendee) {
         res
           .status(HttpStatus.NOT_FOUND)
-          .json({ error: `siu for Id=${bytesToUuid(spaceIntegration.spaceId)} not found` });
+          .json({ error: `attendee for Id=${bytesToUuid(spaceIntegration.spaceId)} not found` });
         return;
       }
 
-      await this.spaceIntegrationUserService.delete(sIU);
+      await this.spaceIntegrationUserService.delete(attendee);
 
       res.status(HttpStatus.OK).json(event);
     } catch (e) {
@@ -100,17 +91,20 @@ export class AttendeeController {
     type: ResponseEventDto,
   })
   @UseGuards(EventsGuard)
-  @Get()
+  @Get(':limit')
   async getAttendees(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
     try {
-      const event = await this.eventsService.getOne(params.spaceId, params.eventId);
+      const integrationType: IntegrationType = await this.integrationTypeService.findOne(IntegrationTypes.EVENT);
+      const space: Space = await this.spaceService.findOne(uuidToBytes(params.spaceId));
+      const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
+      const spaceIntegration = await this.spaceIntegrationService.findOneBySpaceAndIntegration(space, integrationType);
+      const attendees = await this.spaceIntegrationUserService.findAllWhereUserAndIntegration(
+        spaceIntegration,
+        user,
+        params.limit,
+      );
 
-      if (!event) {
-        res.status(HttpStatus.NOT_FOUND).json({ error: `event with Id=${params.eventId} not found` });
-        return;
-      }
-
-      res.status(HttpStatus.OK).json(event);
+      res.status(HttpStatus.OK).json({ ...attendees, count: attendees.length });
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
