@@ -1,7 +1,6 @@
 import { Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SpaceIntegrationUsersService } from '../../space-integration-users/space-integration-users.service';
-import { EventsGuard } from '../events.guard';
 import { ResponseEventDto } from '../event.interfaces';
 import { SpaceIntegrationUser } from '../../space-integration-users/space-integration-users.entity';
 import { IntegrationType } from '../../integration-type/integration-type.entity';
@@ -14,6 +13,7 @@ import { bytesToUuid, uuidToBytes } from '../../utils/uuid-converter';
 import { Space } from '../../space/space.entity';
 import { SpaceService } from '../../space/space.service';
 import { SpaceIntegrationsService } from '../../space-integrations/space-integrations.service';
+import { AttendeeInterface } from './attendee.interface';
 
 @ApiTags('attendees')
 @Controller('attendees')
@@ -28,8 +28,8 @@ export class AttendeeController {
 
   @ApiBearerAuth()
   @ApiResponse({
-    status: 200,
-    type: ResponseEventDto,
+    status: 201,
+    type: SpaceIntegrationUser,
   })
   @Post('add/:spaceId')
   async addAttendee(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
@@ -45,9 +45,9 @@ export class AttendeeController {
       spaceIntegrationUser.data = {};
       spaceIntegrationUser.flag = 0;
 
-      const attendee = await this.spaceIntegrationUserService.create(spaceIntegrationUser);
+      await this.spaceIntegrationUserService.create(spaceIntegrationUser);
 
-      res.status(HttpStatus.OK).json(attendee);
+      res.status(HttpStatus.CREATED).json(spaceIntegrationUser);
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
@@ -78,7 +78,7 @@ export class AttendeeController {
 
       await this.spaceIntegrationUserService.delete(attendee);
 
-      res.status(HttpStatus.OK).json(event);
+      res.status(HttpStatus.OK);
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
@@ -88,7 +88,7 @@ export class AttendeeController {
   @ApiBearerAuth()
   @ApiResponse({
     status: 200,
-    type: ResponseEventDto,
+    type: AttendeeInterface,
   })
   @Get(':spaceId/:limit')
   async getAttendees(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
