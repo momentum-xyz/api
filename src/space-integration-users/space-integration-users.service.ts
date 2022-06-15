@@ -28,6 +28,13 @@ export class SpaceIntegrationUsersService {
     );
   }
 
+  async delete(spaceIntegrationUser: SpaceIntegrationUser): Promise<SpaceIntegrationUser> {
+    return await this.spaceIntegrationUserRepository.query(
+      'DELETE FROM space_integration_users WHERE spaceId = ? AND userId = ? AND integrationTypeId = ?',
+      [spaceIntegrationUser.spaceId, spaceIntegrationUser.userId, spaceIntegrationUser.integrationTypeId],
+    );
+  }
+
   async createOrUpdate(spaceIntegration: SpaceIntegration, user: User, data: SpaceIntegrationUserData, flag: number) {
     await this.spaceIntegrationUserRepository.query(
       `INSERT INTO space_integration_users (spaceId, userId, integrationTypeId, data, flag)
@@ -90,5 +97,25 @@ export class SpaceIntegrationUsersService {
       },
       relations: ['spaceIntegration'],
     });
+  }
+  async findAllWhereUserAndIntegration(
+    spaceIntegration: SpaceIntegration,
+    user: User,
+    limit = false,
+  ): Promise<SpaceIntegrationUser[]> {
+    let options;
+    options = {
+      where: {
+        spaceIntegration: spaceIntegration,
+        user: user,
+      },
+      relations: ['spaceIntegration', 'user'],
+    };
+
+    if (limit) {
+      options = { ...options, limit: 6 };
+    }
+
+    return await this.spaceIntegrationUserRepository.find({ ...options });
   }
 }
