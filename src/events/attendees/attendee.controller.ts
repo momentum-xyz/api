@@ -31,7 +31,6 @@ export class AttendeeController {
     status: 200,
     type: ResponseEventDto,
   })
-  @UseGuards(EventsGuard)
   @Post('add/:spaceId')
   async addAttendee(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
     try {
@@ -43,6 +42,8 @@ export class AttendeeController {
       spaceIntegrationUser.integrationTypeId = integrationType.id;
       spaceIntegrationUser.userId = user.id;
       spaceIntegrationUser.spaceId = space.id;
+      spaceIntegrationUser.data = {};
+      spaceIntegrationUser.flag = 0;
 
       const attendee = await this.spaceIntegrationUserService.create(spaceIntegrationUser);
 
@@ -58,7 +59,6 @@ export class AttendeeController {
     status: 200,
     type: ResponseEventDto,
   })
-  @UseGuards(EventsGuard)
   @Post('remove/:spaceId')
   async removeAttendee(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
     try {
@@ -90,8 +90,7 @@ export class AttendeeController {
     status: 200,
     type: ResponseEventDto,
   })
-  @UseGuards(EventsGuard)
-  @Get(':limit')
+  @Get(':spaceId/:limit')
   async getAttendees(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
     try {
       const integrationType: IntegrationType = await this.integrationTypeService.findOne(IntegrationTypes.EVENT);
@@ -104,7 +103,7 @@ export class AttendeeController {
         params.limit,
       );
 
-      res.status(HttpStatus.OK).json({ ...attendees, count: attendees.length });
+      res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
