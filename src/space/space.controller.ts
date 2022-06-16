@@ -78,6 +78,28 @@ export class SpaceController {
   }
 
   @ApiOperation({
+    description: 'Returns all spaces a user is part of',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all spaces a user is part of',
+    type: Space,
+  })
+  @Get('my/spaces')
+  async mySpaces(@Res() response: Response, @Req() request: TokenInterface): Promise<Response> {
+    const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
+
+    const worlds: Space[] = await this.spaceService.findAllByType(spaceType);
+    const worldIds: string[] = worlds.map((world) => bytesToUuid(world.id));
+
+    return response.status(HttpStatus.OK).json({
+      status: HttpStatus.OK,
+      data: worldIds,
+      message: 'Success',
+    });
+  }
+
+  @ApiOperation({
     description: 'Find spaces based on name, add ?q=.',
   })
   @ApiResponse({
