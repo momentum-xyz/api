@@ -21,14 +21,17 @@ import { GoogleDriveService } from '../space-integrations/googledrive/google-dri
 import { SpaceIntegrationUser } from '../space-integration-users/space-integration-users.entity';
 import { IntegrationTypeService } from '../integration-type/integration-type.service';
 import { IntegrationType } from '../integration-type/integration-type.entity';
+import { Attendee } from './attendees/attendee.entity';
+import { AttendeeService } from './attendees/attendee.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SpaceIntegration, SpaceIntegrationUser, User, UserSpace, IntegrationType]),
+    TypeOrmModule.forFeature([Attendee, SpaceIntegration, SpaceIntegrationUser, User, UserSpace, IntegrationType]),
     HttpModule,
     EventEmitterModule.forRoot(),
   ],
   providers: [
+    AttendeeService,
     BroadcastService,
     UserService,
     UserSpaceService,

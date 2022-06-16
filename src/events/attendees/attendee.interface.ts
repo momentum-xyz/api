@@ -1,8 +1,8 @@
-import { SpaceIntegrationUser } from '../../space-integration-users/space-integration-users.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Attendee } from './attendee.entity';
 
 export class AttendeeInterface {
-  attendees: SpaceIntegrationUser[];
+  attendees: Attendee[];
 
   @ApiProperty({ example: 6 })
   count: number;
