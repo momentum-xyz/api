@@ -11,13 +11,20 @@ export class AttendeeService {
     private readonly attendeeRepository: Repository<Attendee>,
   ) {}
 
-  findAllByEvent(eventId: Buffer): Promise<Attendee[]> {
-    return this.attendeeRepository.find({
+  async findAllByEvent(eventId: Buffer, limit = false): Promise<Attendee[]> {
+    let options;
+    options = {
       where: {
         eventId: eventId,
       },
       relations: ['user'],
-    });
+    };
+
+    if (limit) {
+      options = { ...options, limit: 8 };
+    }
+
+    return await this.attendeeRepository.find({ ...options });
   }
 
   findOne(attendee: Attendee): Promise<Attendee> {
