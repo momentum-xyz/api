@@ -83,7 +83,7 @@ export class AttendeeController {
   async getAttendees(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
     try {
       const event: ResponseEventDto = await this.eventService.getOne(params.spaceId, params.eventId);
-      const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(uuidToBytes(event.id));
+      const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(uuidToBytes(event.id), params.limit);
 
       res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
     } catch (e) {
