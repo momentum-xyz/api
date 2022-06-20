@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseEventDto } from '../event.interfaces';
 import { SpaceIntegrationUser } from '../../space-integration-users/space-integration-users.entity';
@@ -12,6 +12,7 @@ import { AttendeeInterface } from './attendee.interface';
 import { Attendee } from './attendee.entity';
 import { EventsService } from '../events.service';
 import { AttendeeService } from './attendee.service';
+import { Unprotected } from '../../auth/decorators/unprotected.decorator';
 
 @ApiTags('attendees')
 @Controller('attendees')
@@ -80,12 +81,23 @@ export class AttendeeController {
     type: AttendeeInterface,
   })
   @Get(':spaceId/:eventId/:limit')
-  async getAttendees(@Param() params, @Req() request: TokenInterface, @Res() res): Promise<any> {
+  async getAttendees(@Query('q') searchQuery: string, @Param() params, @Res() res): Promise<any> {
     try {
       const event: ResponseEventDto = await this.eventService.getOne(params.spaceId, params.eventId);
       const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(uuidToBytes(event.id), params.limit);
 
-      res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
+      if (searchQuery) {
+        const filteredAttendees: Attendee[] = attendees.filter((attendee) => {
+          return (
+            attendee.user.name.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0 ||
+            attendee.user.email.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0
+          );
+        });
+
+        res.status(HttpStatus.OK).json({ attendees: [...filteredAttendees], count: attendees.length });
+      } else {
+        res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
+      }
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
