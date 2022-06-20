@@ -103,13 +103,20 @@ export class AttendeeController {
   ): Promise<any> {
     try {
       const event: ResponseEventDto = await this.eventService.getOne(params.spaceId, params.eventId);
-      const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(
-        uuidToBytes(event.id),
-        searchQuery,
-        params.limit,
-      );
+      const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(uuidToBytes(event.id), params.limit);
 
-      res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
+      if (searchQuery) {
+        const filteredAttendees: Attendee[] = attendees.filter((attendee) => {
+          return (
+            attendee.user.name.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0 ||
+            attendee.user.email.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0
+          );
+        });
+
+        res.status(HttpStatus.OK).json({ attendees: [...filteredAttendees], count: attendees.length });
+      } else {
+        res.status(HttpStatus.OK).json({ attendees: [...attendees], count: attendees.length });
+      }
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
