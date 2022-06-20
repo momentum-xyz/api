@@ -1,16 +1,5 @@
-import {
-  BadRequestException,
-  Controller,
-  Get,
-  HttpStatus,
-  Param,
-  Post,
-  Query,
-  Req,
-  Res,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseEventDto } from '../event.interfaces';
 import { SpaceIntegrationUser } from '../../space-integration-users/space-integration-users.entity';
 import { IntegrationTypeService } from '../../integration-type/integration-type.service';
@@ -23,10 +12,7 @@ import { AttendeeInterface } from './attendee.interface';
 import { Attendee } from './attendee.entity';
 import { EventsService } from '../events.service';
 import { AttendeeService } from './attendee.service';
-import { SearchGuard } from '../../user/search.guard';
-import { paginateCollection, PaginatedCollection } from '../../utils/pagination';
-import { UserSearchResult } from '../../user/user.interface';
-import { OnlineUser } from '../../online-user/online-user.entity';
+import { Unprotected } from '../../auth/decorators/unprotected.decorator';
 
 @ApiTags('attendees')
 @Controller('attendees')
@@ -95,12 +81,7 @@ export class AttendeeController {
     type: AttendeeInterface,
   })
   @Get(':spaceId/:eventId/:limit')
-  async getAttendees(
-    @Query('q') searchQuery: string,
-    @Param() params,
-    @Req() request: TokenInterface,
-    @Res() res,
-  ): Promise<any> {
+  async getAttendees(@Query('q') searchQuery: string, @Param() params, @Res() res): Promise<any> {
     try {
       const event: ResponseEventDto = await this.eventService.getOne(params.spaceId, params.eventId);
       const attendees: Attendee[] = await this.eventAttendeeService.findAllByEvent(uuidToBytes(event.id), params.limit);
