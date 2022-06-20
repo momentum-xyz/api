@@ -11,7 +11,7 @@ export class AttendeeService {
     private readonly attendeeRepository: Repository<Attendee>,
   ) {}
 
-  async findAllByEvent(eventId: Buffer, limit = false): Promise<Attendee[]> {
+  async findAllByEvent(eventId: Buffer, query: string, limit = false): Promise<Attendee[]> {
     let options;
     options = {
       where: {
