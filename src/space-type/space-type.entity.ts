@@ -15,6 +15,9 @@ export class SpaceType {
   @Column('varchar', { name: 'name', length: 127 })
   name: string;
 
+  @Column('varchar', { name: 'display_category', length: 127 })
+  display_category: string;
+
   @Column('json', { name: 'child_placement', nullable: false })
   child_placement: object;
 

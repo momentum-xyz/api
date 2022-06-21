@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { SpaceTypeService } from './space-type.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -9,6 +20,8 @@ import { SpaceService } from '../space/space.service';
 import { uuidToBytes } from '../utils/uuid-converter';
 import { Space } from '../space/space.entity';
 import { SpaceType } from './space-type.entity';
+import { paginateCollection, PaginatedCollection } from '../utils/pagination';
+import { filter } from '../utils/filter';
 
 @ApiTags('space-type')
 @Controller('space-type')
@@ -28,6 +41,68 @@ export class SpaceTypeController {
   @UseGuards(SpaceGuard)
   async findAll(): Promise<SpaceType[]> {
     return this.spaceTypeService.findAll();
+  }
+
+  @ApiOperation({
+    description: 'Find categories with spaces based on name, add ?q= to search',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns space-information based on query.',
+    type: Space,
+  })
+  @ApiBearerAuth()
+  @Get('explore')
+  async explore(
+    @Query('q') searchQuery: string,
+    @Query('limit') limit: number,
+    @Query('page') page: number,
+    @Query('worldId') worldId: string,
+    @Query('spaceId') spaceId: string,
+  ): Promise<any> {
+    if (!worldId) {
+      throw new BadRequestException('Invalid request, missing worldId');
+    }
+
+    const spaceTypes: SpaceType[] = await this.spaceTypeService.findAll();
+    const filteredSpaceTypes: SpaceType[] = [];
+
+    if (searchQuery) {
+      for (const spaceType of spaceTypes) {
+        const filteredSpaces: Space[] = await filter(spaceType.spaces, async (space) => {
+          const wId = await this.spaceService.getWorldId(space);
+          return space.name.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0 && wId.equals(uuidToBytes(worldId));
+        });
+
+        spaceType.spaces = filteredSpaces;
+
+        if (filteredSpaces.length > 0) {
+          filteredSpaceTypes.push(spaceType);
+        }
+      }
+    }
+    // } else {
+    //   if (!spaceId) {
+    //     throw new BadRequestException('Invalid request, missing spaceId');
+    //   }
+    //
+    //   const space: Space = await this.spaceService.findOne(uuidToBytes(spaceId));
+    //   const childrenTree = await this.spaceService.findAllChildren(space);
+    //   const children: any = childrenTree.length ? childrenTree[0].children : [];
+    //
+    //   for (const child of children) {
+    //     spaceTypes.filter((spaceType) => child.spaceTypeId.equals(spaceType.id));
+    //   }
+    //
+    //   console.log(spaceTypes);
+    // }
+
+    return filteredSpaceTypes.map((fST) => {
+      return {
+        name: fST.display_category,
+        spaces: paginateCollection(fST.spaces, page, limit),
+      };
+    });
   }
 
   @ApiOperation({
