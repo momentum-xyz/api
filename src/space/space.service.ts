@@ -55,6 +55,7 @@ export class SpaceService {
     return this.spaceRepository.find_andOverrideNulls({
       order: { name: 'ASC' },
       where: [{ name: Like(`%${query}%`) }],
+      relations: ['spaceType'],
     });
   }
 
@@ -323,6 +324,7 @@ export class SpaceService {
 
     flatTree.map((item) => {
       item.id = uuidToBytes(bytesToUuid(item.id.data));
+      item.spaceTypeId = uuidToBytes(bytesToUuid(item.spaceTypeId.data));
       item.parentId = uuidToBytes(bytesToUuid(item.parentId.data));
     });
 
