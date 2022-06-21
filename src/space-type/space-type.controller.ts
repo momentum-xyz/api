@@ -100,7 +100,7 @@ export class SpaceTypeController {
     return filteredSpaceTypes.map((fST) => {
       return {
         name: fST.display_category,
-        spaces: paginateCollection(fST.spaces, page, limit),
+        spaces: fST.spaces,
       };
     });
   }
