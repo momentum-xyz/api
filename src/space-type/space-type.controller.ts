@@ -21,6 +21,11 @@ import { uuidToBytes } from '../utils/uuid-converter';
 import { Space } from '../space/space.entity';
 import { SpaceType } from './space-type.entity';
 
+export class ExploreResponse {
+  name: string;
+  spaces: unknown;
+}
+
 @ApiTags('space-type')
 @Controller('space-type')
 export class SpaceTypeController {
@@ -47,7 +52,7 @@ export class SpaceTypeController {
   @ApiResponse({
     status: 200,
     description: 'Returns space-information based on query.',
-    type: Space,
+    type: ExploreResponse,
   })
   @ApiBearerAuth()
   @Get('explore')
@@ -57,7 +62,7 @@ export class SpaceTypeController {
     @Query('page') page: number,
     @Query('worldId') worldId: string,
     @Query('spaceId') spaceId: string,
-  ): Promise<any> {
+  ): Promise<ExploreResponse[]> {
     if (!worldId) {
       throw new BadRequestException('Invalid request, missing worldId');
     }
