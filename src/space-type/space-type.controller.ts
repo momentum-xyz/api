@@ -86,12 +86,19 @@ export class SpaceTypeController {
       children = space.children.filter((child) => child.visible === 1);
     }
 
-    return children.reduce((group, space) => {
+    const reduced = children.reduce((group, space) => {
       const spaceTypeName = space.spaceType.display_category;
       group[spaceTypeName] = group[spaceTypeName] ?? [];
       group[spaceTypeName].push(space);
       return group;
     }, {});
+
+    return Object.keys(reduced).map((key, index) => {
+      return {
+        name: key,
+        spaces: Object.values(reduced)[index],
+      };
+    });
   }
 
   @ApiOperation({
