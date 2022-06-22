@@ -203,7 +203,6 @@ export class KusamaValidator {
     //   parentId = operatorSpaceId;
     // }
 
-    const defaultTiles: Tile[] = await getDefaultTiles(this.connection, config.space_types.validator_node);
     const runner = this.connection.createQueryRunner();
 
     try {
@@ -240,8 +239,6 @@ export class KusamaValidator {
       await runner.query(sql);
 
       await this.insertOrUpdateAttributes(runner, spaceId, parentId, validatorId, validator, config, 'insert');
-
-      await insertTiles(runner, defaultTiles, uiTypeId, spaceId);
 
       await runner.query('COMMIT');
 
