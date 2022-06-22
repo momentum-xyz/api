@@ -42,6 +42,15 @@ export class SpaceService {
     });
   }
 
+  findOneVisible(spaceId: Buffer): Promise<Space> {
+    return this.spaceRepository.findOne_andOverrideNulls({
+      where: {
+        id: spaceId,
+      },
+      relations: ['parent', 'parent.spaceType', 'children', 'spaceType', 'worldDefinition'],
+    });
+  }
+
   ownedSpaces(user: User): Promise<Space[]> {
     return this.spaceRepository.find_andOverrideNulls({
       where: {

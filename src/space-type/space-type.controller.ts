@@ -20,8 +20,6 @@ import { SpaceService } from '../space/space.service';
 import { uuidToBytes } from '../utils/uuid-converter';
 import { Space } from '../space/space.entity';
 import { SpaceType } from './space-type.entity';
-import { paginateCollection, PaginatedCollection } from '../utils/pagination';
-import { filter } from '../utils/filter';
 
 @ApiTags('space-type')
 @Controller('space-type')
@@ -64,45 +62,36 @@ export class SpaceTypeController {
       throw new BadRequestException('Invalid request, missing worldId');
     }
 
-    const spaceTypes: SpaceType[] = await this.spaceTypeService.findAll();
-    const filteredSpaceTypes: SpaceType[] = [];
+    let children: any = [];
 
     if (searchQuery) {
-      for (const spaceType of spaceTypes) {
-        const filteredSpaces: Space[] = await filter(spaceType.spaces, async (space) => {
-          const wId = await this.spaceService.getWorldId(space);
-          return space.name.toLowerCase().indexOf(searchQuery.toLowerCase()) >= 0 && wId.equals(uuidToBytes(worldId));
-        });
+      const filteredSpaces: Space[] = [];
+      const spaces = await this.spaceService.filter(searchQuery);
 
-        spaceType.spaces = filteredSpaces;
+      for (const space of spaces) {
+        const wId = await this.spaceService.getWorldId(space);
 
-        if (filteredSpaces.length > 0) {
-          filteredSpaceTypes.push(spaceType);
+        if (wId.equals(uuidToBytes(worldId))) {
+          filteredSpaces.push(space);
         }
       }
-    }
-    // } else {
-    //   if (!spaceId) {
-    //     throw new BadRequestException('Invalid request, missing spaceId');
-    //   }
-    //
-    //   const space: Space = await this.spaceService.findOne(uuidToBytes(spaceId));
-    //   const childrenTree = await this.spaceService.findAllChildren(space);
-    //   const children: any = childrenTree.length ? childrenTree[0].children : [];
-    //
-    //   for (const child of children) {
-    //     spaceTypes.filter((spaceType) => child.spaceTypeId.equals(spaceType.id));
-    //   }
-    //
-    //   console.log(spaceTypes);
-    // }
 
-    return filteredSpaceTypes.map((fST) => {
-      return {
-        name: fST.display_category,
-        spaces: fST.spaces,
-      };
-    });
+      children = filteredSpaces;
+    } else {
+      if (!spaceId) {
+        throw new BadRequestException('Invalid request, missing spaceId');
+      }
+
+      const space: Space = await this.spaceService.findOneVisible(uuidToBytes(spaceId));
+      children = space.children.filter((child) => child.visible === 1);
+    }
+
+    return children.reduce((group, space) => {
+      const spaceTypeName = space.spaceType.display_category;
+      group[spaceTypeName] = group[spaceTypeName] ?? [];
+      group[spaceTypeName].push(space);
+      return group;
+    }, {});
   }
 
   @ApiOperation({
