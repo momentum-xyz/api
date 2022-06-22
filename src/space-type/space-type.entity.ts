@@ -28,7 +28,7 @@ export class SpaceType {
   minimap: boolean;
 
   @Column('tinyint', { name: 'visible', default: () => 1 })
-  visible: boolean;
+  visible: number;
 
   @Column('json', { name: 'auxiliary_tables' })
   auxiliaryTables: object;
