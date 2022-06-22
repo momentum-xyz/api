@@ -42,6 +42,15 @@ export class SpaceService {
     });
   }
 
+  findOneVisible(spaceId: Buffer): Promise<Space> {
+    return this.spaceRepository.findOne_andOverrideNulls({
+      where: {
+        id: spaceId,
+      },
+      relations: ['parent', 'parent.spaceType', 'children', 'spaceType', 'worldDefinition'],
+    });
+  }
+
   ownedSpaces(user: User): Promise<Space[]> {
     return this.spaceRepository.find_andOverrideNulls({
       where: {
@@ -55,6 +64,7 @@ export class SpaceService {
     return this.spaceRepository.find_andOverrideNulls({
       order: { name: 'ASC' },
       where: [{ name: Like(`%${query}%`) }],
+      relations: ['spaceType'],
     });
   }
 
@@ -323,6 +333,7 @@ export class SpaceService {
 
     flatTree.map((item) => {
       item.id = uuidToBytes(bytesToUuid(item.id.data));
+      item.spaceTypeId = uuidToBytes(bytesToUuid(item.spaceTypeId.data));
       item.parentId = uuidToBytes(bytesToUuid(item.parentId.data));
     });
 

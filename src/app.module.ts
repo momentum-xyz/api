@@ -67,6 +67,8 @@ import { NetworkModule } from './network/network.module';
 import { Stat } from './space/stats/stat.entity';
 import { StatModule } from './space/stats/stat.module';
 import { WorldDefinitionModule } from './world-definition/world-definition.module';
+import { Attendee } from './events/attendees/attendee.entity';
+import { Event } from './events/events.entity';
 
 function getEnvFiles(): string[] {
   switch (process.env.NODE_ENV) {
@@ -126,8 +128,10 @@ function getEnvFiles(): string[] {
       database: process.env.DB_DATABASE,
       charset: 'utf8mb4',
       entities: [
+        Attendee,
         Attribute,
         AudioTrack,
+        Event,
         HighFive,
         Invitation,
         IntegrationType,

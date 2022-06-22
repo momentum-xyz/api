@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { SpaceTypeService } from './space-type.service';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -9,6 +20,11 @@ import { SpaceService } from '../space/space.service';
 import { uuidToBytes } from '../utils/uuid-converter';
 import { Space } from '../space/space.entity';
 import { SpaceType } from './space-type.entity';
+
+export class ExploreResponse {
+  name: string;
+  spaces: unknown;
+}
 
 @ApiTags('space-type')
 @Controller('space-type')
@@ -28,6 +44,66 @@ export class SpaceTypeController {
   @UseGuards(SpaceGuard)
   async findAll(): Promise<SpaceType[]> {
     return this.spaceTypeService.findAll();
+  }
+
+  @ApiOperation({
+    description: 'Find categories with spaces based on name, add ?q= to search',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns space-information based on query.',
+    type: ExploreResponse,
+  })
+  @ApiBearerAuth()
+  @Get('explore')
+  async explore(
+    @Query('q') searchQuery: string,
+    @Query('limit') limit: number,
+    @Query('page') page: number,
+    @Query('worldId') worldId: string,
+    @Query('spaceId') spaceId: string,
+  ): Promise<ExploreResponse[]> {
+    if (!worldId) {
+      throw new BadRequestException('Invalid request, missing worldId');
+    }
+
+    let children: any = [];
+
+    if (searchQuery) {
+      const filteredSpaces: Space[] = [];
+      const spaces = await this.spaceService.filter(searchQuery);
+
+      for (const space of spaces) {
+        const wId = await this.spaceService.getWorldId(space);
+
+        if (wId.equals(uuidToBytes(worldId))) {
+          filteredSpaces.push(space);
+        }
+      }
+
+      children = filteredSpaces;
+    } else {
+      if (!spaceId) {
+        throw new BadRequestException('Invalid request, missing spaceId');
+      }
+
+      const space: Space = await this.spaceService.findOneVisible(uuidToBytes(spaceId));
+      children = space.children.filter((child) => child.visible === 1);
+    }
+
+    const reduced = children.reduce((group, space) => {
+      const spaceTypeName = space.spaceType.display_category;
+      group[spaceTypeName] = group[spaceTypeName] ?? [];
+      group[spaceTypeName].push(space);
+      return group;
+    }, {});
+
+    return Object.keys(reduced).map((key, index) => {
+      return {
+        name: key,
+        spaces: Object.values(reduced)[index],
+      };
+    });
   }
 
   @ApiOperation({
