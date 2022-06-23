@@ -58,10 +58,9 @@ export class EventsController {
   @Get(':spaceId')
   async getAllEvents(
     @Param('spaceId') spaceId,
-    @Req() request: TokenInterface,
     @Res({ passthrough: true }) res,
     @Query('children') children?: string,
-  ): Promise<Event[]> {
+  ): Promise<any[]> {
     const spaceIntegration: SpaceIntegration = await this.getSpaceIntegration(spaceId);
 
     if (!spaceIntegration) {
@@ -69,7 +68,10 @@ export class EventsController {
     }
 
     try {
-      return this.eventsService.getAll(spaceIntegration);
+      const events: Event[] = await this.eventsService.getAll(spaceIntegration);
+      return events.map((event: Event) => {
+        return { ...event, attendeesCount: event.attendees.length };
+      });
     } catch (e) {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: e.message,

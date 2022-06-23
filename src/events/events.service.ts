@@ -21,7 +21,7 @@ export class EventsService {
       order: { start: 'ASC' },
       where: {
         spaceIntegration: spaceIntegration,
-        end: MoreThanOrEqual(Date.now()),
+        end: MoreThanOrEqual(new Date()),
       },
       relations: ['attendees', 'attendees.user'],
     });
