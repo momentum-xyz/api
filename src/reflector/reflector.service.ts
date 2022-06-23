@@ -80,6 +80,11 @@ export class ReflectorService {
                spaces.minimap,
                spaces.frame_templates,
                spaces.metadata,
+               operatorSpace.name                                       AS parentSpaceName,
+               CASE operatorSpace.visible
+                    WHEN 1 THEN operatorSpace.name
+                    ELSE ''
+                    END                                                 AS 'operatorSpaceName',
                CASE operatorSpace.visible
                    WHEN 1 THEN BIN_TO_UUID(operatorSpace.id)
                    ELSE NULL
