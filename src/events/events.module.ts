@@ -23,13 +23,32 @@ import { IntegrationTypeService } from '../integration-type/integration-type.ser
 import { IntegrationType } from '../integration-type/integration-type.entity';
 import { Attendee } from './attendees/attendee.entity';
 import { AttendeeService } from './attendees/attendee.service';
+import { Space } from '../space/space.entity';
+import { SpaceService } from '../space/space.service';
+import { Event } from './events.entity';
+import { SpaceTypeService } from '../space-type/space-type.service';
+import { TileService } from '../tile/tile.service';
+import { SpaceType } from '../space-type/space-type.entity';
+import { Tile } from '../tile/tile.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Attendee, SpaceIntegration, SpaceIntegrationUser, User, UserSpace, IntegrationType]),
+    TypeOrmModule.forFeature([
+      Attendee,
+      Event,
+      Space,
+      SpaceIntegration,
+      SpaceIntegrationUser,
+      SpaceType,
+      User,
+      UserSpace,
+      Tile,
+      IntegrationType,
+    ]),
     HttpModule,
     EventEmitterModule.forRoot(),
   ],
+  exports: [EventsService],
   providers: [
     AttendeeService,
     BroadcastService,
@@ -41,7 +60,10 @@ import { AttendeeService } from './attendees/attendee.service';
     EventsService,
     SpaceIntegrationsService,
     SpaceIntegrationUsersService,
+    SpaceService,
+    SpaceTypeService,
     StageModeService,
+    TileService,
   ],
   controllers: [AttendeeController, EventsController],
 })
