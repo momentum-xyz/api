@@ -63,6 +63,18 @@ export class ControllerListenerModule {
 
   private async cleanUpSpace(space_id: string) {
     console.log('Clean Up Space = ' + space_id);
+
+    const sql = `UPDATE space_integrations
+                     SET data = '{"stageModeStatus": "stopped"}'
+                     WHERE true
+                       AND spaceId = UUID_TO_BIN(${escape(space_id)})
+                       AND integrationTypeId = (SELECT id
+                                                FROM integration_types
+                                                WHERE name = 'stage_mode'
+                         LIMIT 1)`;
+
+    await this.connection.query(sql);
+
     this.client.publish(
       `space_control/${space_id}/relay/stage`,
       JSON.stringify({
