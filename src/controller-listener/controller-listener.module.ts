@@ -75,14 +75,12 @@ export class ControllerListenerModule {
 
     await this.connection.query(sql);
 
-    this.client.publish(
-      `space_control/${space_id}/relay/stage`,
-      JSON.stringify({
-        action: StageModeActions.STATE,
-        value: '0',
-      }),
-      true,
-      space_id,
-    );
+    const payload = JSON.stringify({
+      action: StageModeActions.STATE,
+      value: '0',
+    });
+
+    await this.client.publish(`space_control/${space_id}/relay/stage`, payload, true, space_id);
+    console.log(payload);
   }
 }
