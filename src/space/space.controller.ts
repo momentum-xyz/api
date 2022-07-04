@@ -85,10 +85,10 @@ export class SpaceController {
     description: 'Returns all spaces a user is part of',
     type: Space,
   })
-  @Get('my/spaces')
-  async mySpaces(@Res() response: Response, @Req() request: TokenInterface): Promise<Response> {
-    const user_id: string = request.user.sub;
-    const spaces = await this.spaceService.findMy(user_id);
+  @Get('user-spaces/:userId')
+  async userSpaces(@Res() response: Response, @Req() request: TokenInterface, @Param() params): Promise<Response> {
+    const userId: string = params.userId;
+    const spaces = await this.spaceService.findMy(userId);
 
     return response.status(HttpStatus.OK).json({
       status: HttpStatus.OK,
