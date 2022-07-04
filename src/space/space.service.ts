@@ -17,6 +17,7 @@ import { ISpaceType } from '../space-type/space-type.interface';
 import { Tier } from '../world-definition/world-definition.entity';
 import { SpaceRepository } from './SpaceRepository';
 import { SPACE_VISIBILITY } from './space.entity';
+import { escape } from 'mysql';
 
 @Injectable()
 export class SpaceService {
@@ -31,6 +32,36 @@ export class SpaceService {
     private client: MqttService,
   ) {
     this.spaceRepository = this.connection.getCustomRepository<SpaceRepository>(SpaceRepository);
+  }
+
+  public async findMy(user_id: string): Promise<any[]> {
+    const sql = `
+            SELECT BIN_TO_UUID(s.id)                                   AS id,
+                   s.name                                              AS name,
+                   BIN_TO_UUID(s.ownedById)                            AS ownedById,
+                   s.name_hash,
+                   s.created_at                                        AS created_at,
+                   s.updated_at                                        AS updated_at,
+                   BIN_TO_UUID(s.uiTypeId)                             AS uiTypeId,
+                   BIN_TO_UUID(s.parentId)                             AS parentId,
+                   COALESCE(s.frame_templates, st.frame_templates)     AS frame_templates,
+                   COALESCE(s.allowed_subspaces, st.allowed_subspaces) AS allowed_subspaces,
+                   COALESCE(s.child_placement, st.child_placement)     AS child_placement,
+                   COALESCE(s.minimap, st.minimap)                     AS minimap,
+                   COALESCE(s.visible, st.visible)                     AS visible,
+--                    us.userId,
+                   us.isAdmin,
+                   st.name                                             AS spaceTypeName
+            FROM spaces s
+                     INNER JOIN user_spaces us ON s.id = us.spaceId
+                     INNER JOIN space_types st ON s.spaceTypeId = st.id
+            WHERE userId = UUID_TO_BIN(${escape(user_id)})
+            ORDER BY isAdmin DESC, s.created_at
+        `;
+
+    const rows = await this.connection.query(sql);
+
+    return rows;
   }
 
   findOne(spaceId: Buffer): Promise<Space> {
