@@ -79,7 +79,7 @@ export class ControllerListenerModule {
       `space_control/${space_id}/relay/stage`,
       JSON.stringify({
         action: StageModeActions.STATE,
-        value: 0,
+        value: '0',
       }),
       true,
       space_id,
