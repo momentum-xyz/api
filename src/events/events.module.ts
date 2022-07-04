@@ -10,11 +10,40 @@ import { MqttService } from '../services/mqtt.service';
 import { SyncEvent } from './SyncEvent';
 import { UserSpaceService } from '../user-space/user-space.service';
 import { UserSpace } from '../user-space/user-space.entity';
+import { AttendeeController } from './attendees/attendee.controller';
+import { SpaceIntegrationsService } from '../space-integrations/space-integrations.service';
+import { SpaceIntegration } from '../space-integrations/space-integrations.entity';
+import { SpaceIntegrationUsersService } from '../space-integration-users/space-integration-users.service';
+import { StageModeService } from '../space-integrations/stage-mode/stage-mode.service';
+import { BroadcastService } from '../space-integrations/broadcast/broadcast.service';
+import { MiroService } from '../space-integrations/miro/miro.service';
+import { GoogleDriveService } from '../space-integrations/googledrive/google-drive.service';
+import { SpaceIntegrationUser } from '../space-integration-users/space-integration-users.entity';
+import { IntegrationTypeService } from '../integration-type/integration-type.service';
+import { IntegrationType } from '../integration-type/integration-type.entity';
+import { Attendee } from './attendees/attendee.entity';
+import { AttendeeService } from './attendees/attendee.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, UserSpace]), HttpModule, EventEmitterModule.forRoot()],
-  providers: [UserService, UserSpaceService, EventsService],
-  controllers: [EventsController],
+  imports: [
+    TypeOrmModule.forFeature([Attendee, SpaceIntegration, SpaceIntegrationUser, User, UserSpace, IntegrationType]),
+    HttpModule,
+    EventEmitterModule.forRoot(),
+  ],
+  providers: [
+    AttendeeService,
+    BroadcastService,
+    UserService,
+    UserSpaceService,
+    IntegrationTypeService,
+    MiroService,
+    GoogleDriveService,
+    EventsService,
+    SpaceIntegrationsService,
+    SpaceIntegrationUsersService,
+    StageModeService,
+  ],
+  controllers: [AttendeeController, EventsController],
 })
 export class EventsModule {
   private sync: SyncEvent;

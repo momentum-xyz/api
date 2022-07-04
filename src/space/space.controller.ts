@@ -168,6 +168,7 @@ export class SpaceController {
     const children = childrenTree.length ? childrenTree[0].children : [];
 
     const isAdmin: boolean = await this.userSpaceService.isAdmin(space, user);
+    const isMember: boolean = await this.userSpaceService.isMember(space, user);
 
     const spaceType: string = space.spaceType.name;
 
@@ -176,6 +177,7 @@ export class SpaceController {
       ancestors: parentsFlatTree,
       children: children,
       admin: isAdmin,
+      member: isMember,
       spaceType: spaceType,
       ownerName: space.ownedBy.name,
       status: HttpStatus.OK,

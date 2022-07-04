@@ -20,6 +20,8 @@ import { SpaceScheduler } from './space.scheduler';
 import { SpaceInviteController } from './space-invite.controller';
 import { SpaceIntegrationUser } from '../space-integration-users/space-integration-users.entity';
 import { TableController } from './table.controller';
+import { MeetingController } from './meeting/meeting.controller';
+import { MeetingService } from './meeting/meeting.service';
 
 @Global()
 @Module({
@@ -30,6 +32,7 @@ import { TableController } from './table.controller';
   exports: [SpaceService],
   providers: [
     BroadcastService,
+    MeetingService,
     SpaceService,
     SpaceScheduler,
     SpaceTypeService,
@@ -39,6 +42,6 @@ import { TableController } from './table.controller';
     UserSpaceService,
     UiTypeService,
   ],
-  controllers: [SpaceController, SpaceInviteController, TableController],
+  controllers: [MeetingController, SpaceController, SpaceInviteController, TableController],
 })
 export class SpaceModule {}

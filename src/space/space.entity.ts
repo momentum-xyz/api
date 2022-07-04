@@ -68,7 +68,7 @@ export class Space {
   secret: boolean;
 
   @Column('tinyint', { name: 'visible', nullable: true })
-  visible: boolean;
+  visible: number;
 
   @Column('json', { name: 'asset_parameters', nullable: true })
   assetParameters: object | null;

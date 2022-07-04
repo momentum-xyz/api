@@ -13,6 +13,7 @@ import { OnlineUser } from '../online-user/online-user.entity';
 import { SpaceIntegrationUser } from '../space-integration-users/space-integration-users.entity';
 import { Profile } from './profile/profile.dto';
 import { UserWallet } from '../user-wallet/user-wallet.entity';
+import { Attendee } from '../events/attendees/attendee.entity';
 
 export enum UserStatus {
   ONLINE = 'online',
@@ -64,6 +65,9 @@ export class User {
 
   @Column('text', { name: 'description', nullable: true })
   description: string | null;
+
+  @OneToMany(() => Attendee, (attendee) => attendee.user)
+  attendees: Attendee[];
 
   @ManyToOne(() => UserType, (userTypes) => userTypes.users, {
     onDelete: 'NO ACTION',

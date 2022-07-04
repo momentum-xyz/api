@@ -11,7 +11,7 @@ export interface SpaceDto {
   name: string;
   description: string;
   secret: boolean;
-  visible: boolean;
+  visible: number;
   spaceType: string;
   created_at?: Date;
   updated_at?: Date;
@@ -59,7 +59,7 @@ export class SpaceCreateDto {
     example: 'true',
     description: 'Is the space visible in the 3D environment? Defaults to true',
   })
-  visible?: boolean;
+  visible?: number;
 
   @ApiProperty({
     example: 'project-initiative',
@@ -93,7 +93,7 @@ export class SpaceEditDto {
     example: 'true',
     description: 'Is the space visible in the 3D environment? Defaults to true',
   })
-  visible?: boolean;
+  visible?: number;
 }
 
 export interface OwnedSpace {

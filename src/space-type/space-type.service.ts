@@ -20,7 +20,9 @@ export class SpaceTypeService {
   }
 
   findAll(): Promise<SpaceType[]> {
-    return this.spaceTypeRepository.find();
+    return this.spaceTypeRepository.find({
+      relations: ['spaces'],
+    });
   }
 
   async create(spaceType: SpaceType): Promise<SpaceType> {
