@@ -87,14 +87,12 @@ export class SpaceController {
   })
   @Get('my/spaces')
   async mySpaces(@Res() response: Response, @Req() request: TokenInterface): Promise<Response> {
-    const user: User = await this.userService.findOne(uuidToBytes(request.user.sub));
-
-    const worlds: Space[] = await this.spaceService.findAllByType(spaceType);
-    const worldIds: string[] = worlds.map((world) => bytesToUuid(world.id));
+    const user_id: string = request.user.sub;
+    const spaces = await this.spaceService.findMy(user_id);
 
     return response.status(HttpStatus.OK).json({
       status: HttpStatus.OK,
-      data: worldIds,
+      data: spaces,
       message: 'Success',
     });
   }
