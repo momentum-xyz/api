@@ -17,6 +17,7 @@ import { ISpaceType } from '../space-type/space-type.interface';
 import { Tier } from '../world-definition/world-definition.entity';
 import { SpaceRepository } from './SpaceRepository';
 import { escape } from 'mysql';
+import {WorldConfigResponse} from "./interfaces";
 
 @Injectable()
 export class SpaceService {
@@ -31,6 +32,28 @@ export class SpaceService {
     private client: MqttService,
   ) {
     this.spaceRepository = this.connection.getCustomRepository<SpaceRepository>(SpaceRepository);
+  }
+
+  public async getWorldConfig(spaceId: string): Promise<WorldConfigResponse> {
+    const sql = `SELECT config
+                     FROM world_definition
+                     WHERE id = UUID_TO_BIN(${escape(spaceId)})
+                `;
+
+    const rows = await this.connection.query(sql);
+
+    const response = {
+      community_space_id: '',
+      help_space_id: '',
+    };
+
+    if (rows.length === 1 && rows[0].config) {
+      const config = JSON.parse(rows[0].config);
+      response.community_space_id = config.spaces.community_space;
+      response.help_space_id = config.spaces.help_space;
+    }
+
+    return response;
   }
 
   public async findByUser(user_id: string): Promise<any[]> {

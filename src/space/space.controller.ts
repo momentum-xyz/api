@@ -39,6 +39,7 @@ import { UiTypes } from '../ui-type/ui-type.interface';
 import { paginateCollection, PaginatedCollection } from '../utils/pagination';
 import { UserTypes } from '../user-type/user-type.interface';
 import { SpaceAssignGuard } from './space-assign.guard';
+import { WorldConfigResponse } from './interfaces';
 
 @ApiTags('space')
 @Controller('space')
@@ -91,6 +92,23 @@ export class SpaceController {
     const spaces = await this.spaceService.findByUser(userId);
 
     return response.status(HttpStatus.OK).json(spaces);
+  }
+
+  @ApiOperation({
+    description: 'Returns world config',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns world config',
+    type: WorldConfigResponse,
+  })
+  @Get(':spaceId/world-config')
+  async getWorldConfig(@Res() response: Response, @Req() request: TokenInterface, @Param() params): Promise<Response> {
+    const spaceId: string = params.spaceId;
+    const config = await this.spaceService.getWorldConfig(spaceId);
+
+    console.log(config);
+    return response.status(HttpStatus.OK).json(config);
   }
 
   @ApiOperation({
