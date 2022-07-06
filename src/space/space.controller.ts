@@ -88,13 +88,9 @@ export class SpaceController {
   @Get('user-spaces/:userId')
   async userSpaces(@Res() response: Response, @Req() request: TokenInterface, @Param() params): Promise<Response> {
     const userId: string = params.userId;
-    const spaces = await this.spaceService.findMy(userId);
+    const spaces = await this.spaceService.findByUser(userId);
 
-    return response.status(HttpStatus.OK).json({
-      status: HttpStatus.OK,
-      data: spaces,
-      message: 'Success',
-    });
+    return response.status(HttpStatus.OK).json(spaces);
   }
 
   @ApiOperation({
