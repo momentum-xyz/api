@@ -107,7 +107,6 @@ export class SpaceController {
     const spaceId: string = params.spaceId;
     const config = await this.spaceService.getWorldConfig(spaceId);
 
-    console.log(config);
     return response.status(HttpStatus.OK).json(config);
   }
 
