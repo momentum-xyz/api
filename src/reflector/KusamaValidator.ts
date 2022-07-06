@@ -137,12 +137,11 @@ export class KusamaValidator {
 
     const runner = this.connection.createQueryRunner();
     try {
-      const nameHash = await renderName(validator.validatorAccountDetails.name);
       await runner.query('BEGIN');
       const sql = `UPDATE spaces
                    SET name      = ${escape(validator.validatorAccountDetails.name)},
                        parentId  = UUID_TO_BIN(${escape(parentId)}),
-                       name_hash = ${escape(nameHash)},
+                       name_hash = NULL,
                        visible=${+isValidatorVisible},
                        metadata  = JSON_SET(metadata, "$.kusama_metadata.validator_info",
                                             CAST(${escape(JSON.stringify(validator))} AS JSON))
@@ -203,7 +202,6 @@ export class KusamaValidator {
     //   parentId = operatorSpaceId;
     // }
 
-    const defaultTiles: Tile[] = await getDefaultTiles(this.connection, config.space_types.validator_node);
     const runner = this.connection.createQueryRunner();
 
     try {
@@ -217,8 +215,6 @@ export class KusamaValidator {
         },
       };
 
-      const nameHash = await renderName(validator.validatorAccountDetails.name);
-
       const isValidatorVisible = this.isValidatorVisible(validator.status === 'active', parentId, config);
 
       const sql = `
@@ -230,7 +226,7 @@ export class KusamaValidator {
                   UUID_TO_BIN(${escape(config.space_types.validator_node)}),
                   UUID_TO_BIN(${escape(parentId)}),
                   ${escape(validator.validatorAccountDetails.name)},
-                  ${escape(nameHash)},
+                  NULL,
                   null,
                   null,
                   ${+isValidatorVisible},
@@ -240,8 +236,6 @@ export class KusamaValidator {
       await runner.query(sql);
 
       await this.insertOrUpdateAttributes(runner, spaceId, parentId, validatorId, validator, config, 'insert');
-
-      await insertTiles(runner, defaultTiles, uiTypeId, spaceId);
 
       await runner.query('COMMIT');
 
