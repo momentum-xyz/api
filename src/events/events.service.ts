@@ -68,7 +68,16 @@ export class EventsService {
 
   async getAllCount(): Promise<any> {
     const sql = `
-        SELECT COUNT(*) FROM space_integration_events
+        SELECT COUNT(*) FROM space_integration_events WHERE end >= NOW()
+    `;
+
+    const rows = await this.connection.query(sql);
+    return Number(Object.values(rows[0])[0]);
+  }
+
+  async getAllPastCount(): Promise<any> {
+    const sql = `
+        SELECT COUNT(*) FROM space_integration_events WHERE end <= NOW()
     `;
 
     const rows = await this.connection.query(sql);
