@@ -5,7 +5,7 @@ import { bytesToUuid, uuidToBytes } from '../utils/uuid-converter';
 import { arrayToTree } from '../utils/arrayToTree';
 import { UserSpaceService } from '../user-space/user-space.service';
 import { v4 as uuidv4 } from 'uuid';
-import { Space } from './space.entity';
+import { Space, SPACE_VISIBILITY } from './space.entity';
 import { UiType } from '../ui-type/ui-type.entity';
 import { SpaceType } from '../space-type/space-type.entity';
 import { User } from '../user/user.entity';
@@ -16,7 +16,8 @@ import { SpaceTypeService } from '../space-type/space-type.service';
 import { ISpaceType } from '../space-type/space-type.interface';
 import { Tier } from '../world-definition/world-definition.entity';
 import { SpaceRepository } from './SpaceRepository';
-import { SPACE_VISIBILITY } from './space.entity';
+import { escape } from 'mysql';
+import {WorldConfigResponse} from "./interfaces";
 
 @Injectable()
 export class SpaceService {
@@ -31,6 +32,66 @@ export class SpaceService {
     private client: MqttService,
   ) {
     this.spaceRepository = this.connection.getCustomRepository<SpaceRepository>(SpaceRepository);
+  }
+
+  public async getWorldConfig(spaceId: string): Promise<WorldConfigResponse> {
+    const sql = `SELECT config
+                     FROM world_definition
+                     WHERE id = UUID_TO_BIN(${escape(spaceId)})
+                `;
+
+    const rows = await this.connection.query(sql);
+
+    const response = {
+      community_space_id: '',
+      help_space_id: '',
+    };
+
+    if (rows.length === 1 && rows[0].config) {
+      const config = JSON.parse(rows[0].config);
+      response.community_space_id = config.spaces.community_space;
+      response.help_space_id = config.spaces.help_space;
+    }
+
+    return response;
+  }
+
+  public async findByUser(user_id: string): Promise<any[]> {
+    let sql = `CALL GetCompoundUsersByID(UUID_TO_BIN(${escape(user_id)}), 1000000);`;
+
+    let rows = await this.connection.query(sql);
+
+    rows = rows[0];
+
+    // Convert ids from binary to hex strings
+    const userIds: string[] = rows.map((x) => '0x' + x.id.toString('hex'));
+
+    sql = `
+            SELECT BIN_TO_UUID(s.id)                                   AS id,
+                   s.name                                              AS name,
+                   BIN_TO_UUID(s.ownedById)                            AS ownedById,
+                   s.name_hash,
+                   s.created_at                                        AS created_at,
+                   s.updated_at                                        AS updated_at,
+                   BIN_TO_UUID(s.uiTypeId)                             AS uiTypeId,
+                   BIN_TO_UUID(s.parentId)                             AS parentId,
+                   COALESCE(s.frame_templates, st.frame_templates)     AS frame_templates,
+                   COALESCE(s.allowed_subspaces, st.allowed_subspaces) AS allowed_subspaces,
+                   COALESCE(s.child_placement, st.child_placement)     AS child_placement,
+                   COALESCE(s.minimap, st.minimap)                     AS minimap,
+                   COALESCE(s.visible, st.visible)                     AS visible,
+                   us.isAdmin,
+                   st.name                                             AS spaceTypeName
+            FROM spaces s
+                     INNER JOIN user_spaces us ON s.id = us.spaceId
+                     INNER JOIN space_types st ON s.spaceTypeId = st.id
+            WHERE userId IN (${userIds.join(',')})
+            ORDER BY isAdmin DESC, s.created_at
+        `;
+
+    rows = await this.connection.query(sql);
+
+    return rows;
   }
 
   findOne(spaceId: Buffer): Promise<Space> {

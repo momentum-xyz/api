@@ -69,6 +69,7 @@ import { StatModule } from './space/stats/stat.module';
 import { WorldDefinitionModule } from './world-definition/world-definition.module';
 import { Attendee } from './events/attendees/attendee.entity';
 import { Event } from './events/events.entity';
+import { ControllerListenerModule } from './controller-listener/controller-listener.module';
 
 function getEnvFiles(): string[] {
   switch (process.env.NODE_ENV) {
@@ -195,6 +196,7 @@ function getEnvFiles(): string[] {
     VanityModule,
     VibeModule,
     WorldDefinitionModule,
+    ControllerListenerModule,
   ],
   providers: [
     {

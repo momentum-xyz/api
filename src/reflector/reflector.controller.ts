@@ -34,13 +34,47 @@ export class ReflectorController {
   })
   @ApiQuery({ name: 'parentSpaceId', required: false })
   @ApiTags('space')
-  @Get('space/get-validators')
+  @Get('space/get-validators/v2')
   @ApiBearerAuth()
-  async getValidators(
+  async getValidators_v2(
     @Req() request: TokenInterface,
     @Query('withIdentity') identityParam?: string,
     @Query('parentSpaceId') parentSpaceId?: string,
     @Query('isFavorited') isFavoritedParam?: string,
+  ) {
+    let withIdentity: boolean | null = null;
+    if (identityParam) {
+      withIdentity = ['1', 'true'].includes(identityParam);
+    }
+
+    let isFavorited: true | null = null;
+    if (['1', 'true'].includes(isFavoritedParam)) {
+      isFavorited = true;
+    }
+
+    const user = await this.userService.findOne(uuidToBytes(request.user.sub));
+
+    return await this.reflectorService.getValidators_v2(user, withIdentity, parentSpaceId, isFavorited);
+  }
+
+  @ApiOperation({
+    description: 'Returns all spaces linked to validator',
+  })
+  @ApiQuery({
+    name: 'withIdentity',
+    description: 'Only return validators with an identity',
+    example: 'true',
+    required: false,
+  })
+  @ApiQuery({ name: 'parentSpaceId', required: false })
+  @ApiTags('space')
+  @Get('space/get-validators')
+  @ApiBearerAuth()
+  async getValidators(
+      @Req() request: TokenInterface,
+      @Query('withIdentity') identityParam?: string,
+      @Query('parentSpaceId') parentSpaceId?: string,
+      @Query('isFavorited') isFavoritedParam?: string,
   ) {
     let withIdentity: boolean | null = null;
     if (identityParam) {
