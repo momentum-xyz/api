@@ -32,12 +32,14 @@ export class KappaSigmaMu {
   private async updateMembers(accountIds: string[]) {
     // TODO for tests only
     // accountIds = [];
-    // accountIds.push('0xeea2f3ddf9e608ba57df3fdf413e9b66943b906183541bbfb3eaaedd49b02355');
-    // accountIds.push('0x0C884917B7C262BCBCC19367C9B63DB0CBD2D8CBE7FA636AC76E3CF4AE5FBC12');
+    accountIds.push('EqzmkHwD8uL6HDyr2fWumNu7M39sTWkBjerNrms3mTE1R4v');
+    //accountIds.push('0x0C884917B7C262BCBCC19367C9B63DB0CBD2D8CBE7FA636AC76E3CF4AE5FBC12');
 
+    console.log(accountIds);
     const hexWallets = accountIds.map((wallet) => {
       return u8aToHex(decodeAddress(wallet)).toLowerCase();
     });
+    console.log(hexWallets);
 
     const { created, removed } = KappaSigmaMu.getDiff(hexWallets, this.previousHexWallets);
     this.previousHexWallets = hexWallets;
