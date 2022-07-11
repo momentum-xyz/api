@@ -68,7 +68,7 @@ export class AttendeeController {
 
       await this.eventAttendeeService.delete(uuidToBytes(event.id), user.id);
 
-      res.status(HttpStatus.OK);
+      res.status(HttpStatus.NO_CONTENT).end();
     } catch (e) {
       console.log(e);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message });
