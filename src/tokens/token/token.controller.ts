@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpStatus, Param, Post, Query, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpStatus, NotFoundException, Param, Post, Query, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { TokenService } from './token.service';
 import { SpaceService } from '../../space/space.service';
 import { Space } from '../../space/space.entity';
 import { bytesToUuid, ethToBytes, uuidToBytes } from '../../utils/uuid-converter';
-import { Token } from './token.entity';
+import { Token, TokenType } from './token.entity';
 import { TokenInterface } from '../../auth/auth.interface';
 import { User } from '../../user/user.entity';
 import { TokenCreateDto } from './token.interface';
@@ -13,6 +13,7 @@ import { UserService } from '../../user/user.service';
 import { Network, NetworkType } from '../../network/network.entity';
 import { NetworkService } from '../../network/network.service';
 import { paginateCollection } from '../../utils/pagination';
+import axios from 'axios';
 
 // TODO: For now listed here, should come from token-service at some point
 export const SUPPORTED_NETWORKS = [NetworkType.ETH_MAINNET, NetworkType.MOONBEAM];
@@ -66,25 +67,48 @@ export class TokenController {
   }
 
   @ApiOperation({
-    description: 'Fetches token name based on networkId and address.',
+    description: 'Fetches token name based on parameters.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Returns an array of all matched token-names.',
+    description: 'Returns an array of all matched token-names',
   })
   @ApiBearerAuth()
   @Get('info')
   async fetchTokenNames(
-    @Query('network') networkType: NetworkType,
+    @Query('networkName') networkName: NetworkType,
+    @Query('networkType') networkType: string,
     @Query('address') address: string,
+    @Query('tokenType') tokenType: TokenType,
+    @Query('id') id: number,
     @Res() response: Response,
   ): Promise<Response> {
-    const network: Network = await this.networkService.findOne(networkType);
-    const tokens: Token[] = await this.tokenService.findByNetworkAndAddress(network, ethToBytes(address));
-    const tokenNames: string[] = tokens.map((token) => token.name);
+    const network: Network = await this.networkService.findOne(networkName);
+
+    if (!network) {
+      throw new NotFoundException('Could not find network');
+    }
+
+    const options = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    const jsonObject = {
+      contractAddress: address,
+      tokenId: Number(id),
+      tokenType: tokenType,
+      network: {
+        name: network.name,
+        type: networkType,
+      },
+    };
+
+    const tokenName = await axios.post(`${process.env.TOKEN_MONITOR_URL}/token-name`, jsonObject, options);
 
     return response.status(HttpStatus.OK).json({
-      tokenNames: tokenNames,
+      tokenName: tokenName.data,
     });
   }
 
