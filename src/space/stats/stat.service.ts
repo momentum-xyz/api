@@ -222,6 +222,7 @@ export class StatService implements OnModuleInit {
     const totalHighFives: number = await this.highFiveService.findCount();
 
     const totalEvents: number = await this.eventsService.getAllCount();
+    const totalPastEvents: number = await this.eventsService.getAllPastCount();
 
     return [
       {
@@ -264,7 +265,7 @@ export class StatService implements OnModuleInit {
         worldId: bytesToUuid(worldId),
         columnId: 0,
         name: `MEETINGS HELD`,
-        value: '0',
+        value: totalPastEvents.toString(),
       },
     ];
   }
