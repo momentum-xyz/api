@@ -30,12 +30,15 @@ import { SpaceTypeService } from '../space-type/space-type.service';
 import { TileService } from '../tile/tile.service';
 import { SpaceType } from '../space-type/space-type.entity';
 import { Tile } from '../tile/tile.entity';
+import { MagicLinksService } from '../magic-link/magic-links.service';
+import { MagicLink } from '../magic-link/magic-link.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Attendee,
       Event,
+      MagicLink,
       Space,
       SpaceIntegration,
       SpaceIntegrationUser,
@@ -55,6 +58,7 @@ import { Tile } from '../tile/tile.entity';
     UserService,
     UserSpaceService,
     IntegrationTypeService,
+    MagicLinksService,
     MiroService,
     GoogleDriveService,
     EventsService,

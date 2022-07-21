@@ -26,7 +26,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventsGuard } from './events.guard';
 import { SpaceService } from '../space/space.service';
-import { uuidToBytes } from '../utils/uuid-converter';
+import { bytesToUuid, uuidToBytes } from '../utils/uuid-converter';
 import { SpaceIntegration } from '../space-integrations/space-integrations.entity';
 import { Space } from '../space/space.entity';
 import { Event } from './events.entity';
@@ -34,6 +34,11 @@ import { IntegrationType } from '../integration-type/integration-type.entity';
 import { IntegrationTypes } from '../integration-type/integration-type.interface';
 import { IntegrationTypeService } from '../integration-type/integration-type.service';
 import { SpaceIntegrationsService } from '../space-integrations/space-integrations.service';
+import { MagicLink } from '../magic-link/magic-link.entity';
+import { MagicLinksService } from '../magic-link/magic-links.service';
+import { Unprotected } from '../auth/decorators/unprotected.decorator';
+import { Attendee } from './attendees/attendee.entity';
+import { AttendeeService } from './attendees/attendee.service';
 
 @ApiTags('events')
 @Controller('events')
@@ -41,9 +46,11 @@ export class EventsController {
   constructor(
     private readonly eventsService: EventsService,
     private eventEmitter: EventEmitter2,
+    private eventAttendeeService: AttendeeService,
     private spaceService: SpaceService,
     private integrationTypeService: IntegrationTypeService,
     private spaceIntegrationService: SpaceIntegrationsService,
+    private magicLinkService: MagicLinksService,
   ) {}
 
   @ApiOperation({
@@ -61,6 +68,7 @@ export class EventsController {
     @Res({ passthrough: true }) res,
     @Query('children') children?: string,
   ): Promise<any[]> {
+    const eventsWithMagicLink = [];
     const spaceIntegration: SpaceIntegration = await this.getSpaceIntegration(spaceId);
 
     if (!spaceIntegration) {
@@ -68,8 +76,16 @@ export class EventsController {
     }
 
     try {
-      const events: Event[] = await this.eventsService.getAll(spaceIntegration);
-      return events.map((event: Event) => {
+      const events: any[] = await this.eventsService.getAll(spaceIntegration);
+
+      for (const event of events) {
+        const magicLink: MagicLink = await this.magicLinkService.findByEventId(bytesToUuid(event.id));
+
+        const newEvent = { ...event, magicLink: magicLink[0] };
+        eventsWithMagicLink.push(newEvent);
+      }
+
+      return eventsWithMagicLink.map((event: Event) => {
         return { ...event, attendeesCount: event.attendees.length };
       });
     } catch (e) {

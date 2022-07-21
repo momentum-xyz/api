@@ -19,4 +19,10 @@ export class MagicLinksService {
   async findOne(id: Buffer): Promise<MagicLink> {
     return await this.magicLinkRepository.findOne({ where: { id: id } });
   }
+
+  async findByEventId(eventId: string): Promise<MagicLink> {
+    return this.magicLinkRepository.query("SELECT * FROM magic_links WHERE JSON_EXTRACT(data, '$.eventId') = ?", [
+      eventId,
+    ]);
+  }
 }
