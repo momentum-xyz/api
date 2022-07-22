@@ -1,5 +1,5 @@
 import { HttpService, Injectable } from '@nestjs/common';
-import { Connection, Like } from 'typeorm';
+import { Connection, Like, Raw } from 'typeorm';
 import { MqttService } from '../services/mqtt.service';
 import { bytesToUuid, uuidToBytes } from '../utils/uuid-converter';
 import { arrayToTree } from '../utils/arrayToTree';
@@ -17,7 +17,7 @@ import { ISpaceType } from '../space-type/space-type.interface';
 import { Tier } from '../world-definition/world-definition.entity';
 import { SpaceRepository } from './SpaceRepository';
 import { escape } from 'mysql';
-import {WorldConfigResponse} from "./interfaces";
+import { WorldConfigResponse } from './interfaces';
 
 @Injectable()
 export class SpaceService {
@@ -112,12 +112,19 @@ export class SpaceService {
     });
   }
 
-  ownedSpaces(user: User): Promise<Space[]> {
+  ownedSpaces(user: User, visibility = SPACE_VISIBILITY.VISIBLE): Promise<Space[]> {
     return this.spaceRepository.find_andOverrideNulls({
+      join: {
+        alias: 'space',
+        leftJoinAndSelect: {
+          parent: 'space.parent',
+          spaceType: 'space.spaceType',
+        },
+      },
       where: {
         ownedBy: user,
+        visible: Raw((_) => 'COALESCE(space.visible, spaceType.visible) = :visible', { visible: visibility }),
       },
-      relations: ['parent'],
     });
   }
 
@@ -510,6 +517,10 @@ export class SpaceService {
 
   async checkInitiativeSpaceThreshold(user: User, world: Space): Promise<boolean> {
     const spaceThreshold = world.worldDefinition?.userSpacesLimit || 0;
+    if (spaceThreshold < 1) {
+      // shortcircuit common case, no need for extra queries.
+      return false;
+    }
 
     let spacesTowardsThreshold = 0;
     const ownedSpaces: Space[] = await this.ownedSpaces(user);
