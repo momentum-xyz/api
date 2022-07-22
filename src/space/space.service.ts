@@ -59,9 +59,11 @@ export class SpaceService {
   public async findByUser(user_id: string, visibility = SPACE_VISIBILITY.VISIBLE): Promise<any[]> {
     let sql = `CALL GetCompoundUsersByID(UUID_TO_BIN(${escape(user_id)}), 1000000);`;
 
-    let rows = await this.connection.query(sql);
-
-    rows = rows[0];
+    const results = await this.connection.query(sql);
+    let rows = results[0];
+    if (rows.length < 1) {
+      return [];
+    }
 
     // Convert ids from binary to hex strings
     const userIds: string[] = rows.map((x) => '0x' + x.id.toString('hex'));
