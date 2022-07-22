@@ -517,6 +517,10 @@ export class SpaceService {
 
   async checkInitiativeSpaceThreshold(user: User, world: Space): Promise<boolean> {
     const spaceThreshold = world.worldDefinition?.userSpacesLimit || 0;
+    if (spaceThreshold < 1) {
+      // shortcircuit common case, no need for extra queries.
+      return false;
+    }
 
     let spacesTowardsThreshold = 0;
     const ownedSpaces: Space[] = await this.ownedSpaces(user);
