@@ -17,6 +17,15 @@ export class Event {
   @Column('varchar', { name: 'title', length: 255 })
   title: string;
 
+  @Column('varchar', { name: 'hosted_by', length: 255 })
+  hosted_by: string;
+
+  @Column('varchar', { name: 'image_hash', length: 255 })
+  image_hash: string;
+
+  @Column('varchar', { name: 'web_link', length: 255 })
+  web_link: string;
+
   @Column('text', { name: 'description' })
   description: string;
 
@@ -33,6 +42,17 @@ export class Event {
 
   @OneToMany(() => Attendee, (attendee) => attendee.event)
   attendees: Attendee[];
+
+  @Column('timestamp', {
+    name: 'start',
+  })
+  start: Date;
+
+  @Column('timestamp', {
+    name: 'end',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  end: Date;
 
   @Column('timestamp', {
     name: 'created',

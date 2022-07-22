@@ -1,69 +1,30 @@
 import { HttpService, Injectable } from '@nestjs/common';
-import { Connection } from 'typeorm';
+import { Connection, MoreThanOrEqual, Repository } from 'typeorm';
 import { NewEventDto, ResponseEventDto, UpdateEventDto } from './event.interfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { escape } from 'mysql';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Event } from './events.entity';
+import { SpaceIntegration } from '../space-integrations/space-integrations.entity';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly connection: Connection, private httpService: HttpService) {}
+  constructor(
+    @InjectRepository(Event)
+    private readonly eventRepository: Repository<Event>,
+    private readonly connection: Connection,
+    private httpService: HttpService,
+  ) {}
 
-  async getAll(spaceId: string, recursive = false): Promise<any> {
-    let sql: string;
-    if (recursive) {
-      sql = `
-        WITH RECURSIVE cte as (
-          select id, parentId, name, 0 AS level
-          FROM spaces
-          WHERE id = UUID_TO_BIN(${escape(spaceId)})
-          UNION ALL
-          SELECT p.id, p.parentId, p.name, level + 1
-          FROM spaces p
-          INNER JOIN cte on p.parentId = cte.id
-          WHERE level < 1000
-        )
-        SELECT BIN_TO_UUID(space_integration_events.id) as id,
-               BIN_TO_UUID(spaceId)           as spaceId,
-               BIN_TO_UUID(integrationTypeId) as integrationTypeId,
-               title,
-               description,
-               hosted_by,
-               image_hash,
-               start,
-               end,
-               created,
-               modified,
-               web_link,
-               cte.name as spaceName
-          FROM space_integration_events
-          INNER JOIN cte on cte.id = spaceId
-          WHERE end >= NOW()
-          ORDER BY start
-      `;
-    } else {
-      sql = `
-        SELECT BIN_TO_UUID(space_integration_events.id) as id,
-               BIN_TO_UUID(spaceId)           as spaceId,
-               BIN_TO_UUID(integrationTypeId) as integrationTypeId,
-               title,
-               description,
-               hosted_by,
-               image_hash,
-               start,
-               end,
-               created,
-               modified,
-               web_link,
-               spaces.name as spaceName
-        FROM space_integration_events
-        INNER JOIN spaces ON spaces.id = spaceId
-        WHERE spaceId = UUID_TO_BIN(${escape(spaceId)})
-          AND end >= NOW()
-        ORDER BY start
-    `;
-    }
-
-    return await this.connection.query(sql);
+  async getAll(spaceIntegration: SpaceIntegration): Promise<Event[]> {
+    return this.eventRepository.find({
+      order: { start: 'ASC' },
+      where: {
+        spaceIntegration: spaceIntegration,
+        end: MoreThanOrEqual(new Date()),
+      },
+      relations: ['attendees', 'attendees.user'],
+    });
   }
 
   async getAllCount(): Promise<any> {

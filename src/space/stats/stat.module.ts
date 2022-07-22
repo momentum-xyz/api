@@ -21,10 +21,22 @@ import { Tile } from '../../tile/tile.entity';
 import { EventsService } from '../../events/events.service';
 import { WorldDefinition } from '../../world-definition/world-definition.entity';
 import { WorldDefinitionService } from '../../world-definition/world-definition.service';
+import { Event } from '../../events/events.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([HighFive, Stat, Space, SpaceType, OnlineUser, User, UserSpace, Tile, WorldDefinition]),
+    TypeOrmModule.forFeature([
+      Event,
+      HighFive,
+      Stat,
+      Space,
+      SpaceType,
+      OnlineUser,
+      User,
+      UserSpace,
+      Tile,
+      WorldDefinition,
+    ]),
     HttpModule,
   ],
   exports: [StatService],

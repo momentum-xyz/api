@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpStatus,
+  NotFoundException,
   Param,
   Post,
   Put,
@@ -23,31 +25,69 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EventsGuard } from './events.guard';
+import { SpaceService } from '../space/space.service';
+import { bytesToUuid, uuidToBytes } from '../utils/uuid-converter';
+import { SpaceIntegration } from '../space-integrations/space-integrations.entity';
+import { Space } from '../space/space.entity';
+import { Event } from './events.entity';
+import { IntegrationType } from '../integration-type/integration-type.entity';
+import { IntegrationTypes } from '../integration-type/integration-type.interface';
+import { IntegrationTypeService } from '../integration-type/integration-type.service';
+import { SpaceIntegrationsService } from '../space-integrations/space-integrations.service';
+import { MagicLink } from '../magic-link/magic-link.entity';
+import { MagicLinksService } from '../magic-link/magic-links.service';
+import { Unprotected } from '../auth/decorators/unprotected.decorator';
+import { Attendee } from './attendees/attendee.entity';
+import { AttendeeService } from './attendees/attendee.service';
 
 @ApiTags('events')
 @Controller('events')
 export class EventsController {
-  constructor(private readonly eventsService: EventsService, private eventEmitter: EventEmitter2) {}
+  constructor(
+    private readonly eventsService: EventsService,
+    private eventEmitter: EventEmitter2,
+    private eventAttendeeService: AttendeeService,
+    private spaceService: SpaceService,
+    private integrationTypeService: IntegrationTypeService,
+    private spaceIntegrationService: SpaceIntegrationsService,
+    private magicLinkService: MagicLinksService,
+  ) {}
 
   @ApiOperation({
     description: 'Get list of events. List filtered by `end > current timestamp`',
   })
   @ApiResponse({
     status: 200,
-    type: [ResponseEventDto],
+    type: [Event],
   })
   @ApiBearerAuth()
   @UseGuards(EventsGuard)
   @Get(':spaceId')
   async getAllEvents(
     @Param('spaceId') spaceId,
-    @Req() request: TokenInterface,
     @Res({ passthrough: true }) res,
     @Query('children') children?: string,
-  ): Promise<any> {
-    const recursive = ['true', '1'].includes(children);
+  ): Promise<any[]> {
+    const eventsWithMagicLink = [];
+    const spaceIntegration: SpaceIntegration = await this.getSpaceIntegration(spaceId);
+
+    if (!spaceIntegration) {
+      throw new NotFoundException('Could not find spaceIntegration');
+    }
+
     try {
-      return await this.eventsService.getAll(spaceId, recursive);
+      const events: any[] = await this.eventsService.getAll(spaceIntegration);
+
+      for (const event of events) {
+        const magicLink: MagicLink = await this.magicLinkService.findByEventId(bytesToUuid(event.id));
+
+        const newEvent = { ...event, magicLink: magicLink[0] };
+        eventsWithMagicLink.push(newEvent);
+      }
+
+      return eventsWithMagicLink.map((event: Event) => {
+        return { ...event, attendeesCount: event.attendees.length };
+      });
     } catch (e) {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: e.message,
@@ -199,5 +239,21 @@ export class EventsController {
     } catch (e) {
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: e.message, info: e.toString() });
     }
+  }
+
+  /**
+   * Get the stage-mode integration instance for a space.
+   *
+   * throws BadRequestException if it doesn't exist.
+   */
+  async getSpaceIntegration(spaceId: string): Promise<SpaceIntegration> {
+    const space: Space = await this.spaceService.findOne(uuidToBytes(spaceId));
+    const integrationType: IntegrationType = await this.integrationTypeService.findOne(IntegrationTypes.EVENT);
+
+    const spaceIntegration = await this.spaceIntegrationService.findOneBySpaceAndIntegration(space, integrationType);
+    if (!spaceIntegration) {
+      throw new BadRequestException('Could not find events integration for space `${space.id}`. Is it enabled?');
+    }
+    return spaceIntegration;
   }
 }
